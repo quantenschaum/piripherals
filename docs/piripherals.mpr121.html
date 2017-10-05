@@ -6,8 +6,8 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>piripherals.mpr121 module &#8212; piripherals 0.1 documentation</title>
-    <link rel="stylesheet" href="static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -18,14 +18,14 @@
         SOURCELINK_SUFFIX: '.txt'
       };
     </script>
-    <script type="text/javascript" src="static/jquery.js"></script>
-    <script type="text/javascript" src="static/underscore.js"></script>
-    <script type="text/javascript" src="static/doctools.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="piripherals.led module" href="piripherals.led.html" />
    
-  <link rel="stylesheet" href="static/custom.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
@@ -80,7 +80,8 @@ pin numbers are set in round braces (x).</p>
 </table>
 <p>Connecting the IRQ line is optional but recommended to avoid unneccessary bus
 traffic and CPU load due to polling. To able to use the IRQ, you need to have
-<a class="reference external" href="https://pypi.python.org/pypi/RPi.GPIO">RPi.GPIO</a> installed (<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-rpi.gpio</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">RPi.GPIO</span></code>).</p>
+<a class="reference external" href="https://pypi.python.org/pypi/RPi.GPIO">RPi.GPIO</a> installed (<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-rpi.gpio</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">RPi.GPIO</span></code>).
+You may use a different pin, adjust the number accordingly.</p>
 <p>If you want to connect multiple MPR121s to the same bus, you can change their
 address with the address pin. Refer to the <a class="reference external" href="https://www.sparkfun.com/datasheets/Components/MPR121.pdf">datasheet</a> on how to do this.</p>
 </div>
@@ -123,7 +124,7 @@ implementation installed. Use <code class="docutils literal"><span class="pre">p
 the settings.</p>
 <dl class="class">
 <dt id="piripherals.mpr121.MPR121">
-<em class="property">class </em><code class="descclassname">piripherals.mpr121.</code><code class="descname">MPR121</code><span class="sig-paren">(</span><em>addr=90</em>, <em>bus=1</em>, <em>irq=0</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">piripherals.mpr121.</code><code class="descname">MPR121</code><span class="sig-paren">(</span><em>addr=90</em>, <em>bus=1</em>, <em>irq=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121" title="Permalink to this definition">¶</a></dt>
 <dd><p>MPR121 capacitive touch sensor and GPIO/LED controller.</p>
 <p>It will be configured with sane defaults and started immediately.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -142,7 +143,7 @@ the settings.</p>
 </table>
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.auto_config">
-<code class="descname">auto_config</code><span class="sig-paren">(</span><em>ace=1</em>, <em>are=1</em>, <em>bva=3</em>, <em>retry=2</em>, <em>afes=1</em>, <em>scts=0</em>, <em>acfie=1</em>, <em>arfie=1</em>, <em>oorie=1</em>, <em>usl=200</em>, <em>lsl=130</em>, <em>tl=180</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.auto_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.auto_config" title="Permalink to this definition">¶</a></dt>
+<code class="descname">auto_config</code><span class="sig-paren">(</span><em>ace=1</em>, <em>are=1</em>, <em>bva=3</em>, <em>retry=2</em>, <em>afes=1</em>, <em>scts=0</em>, <em>acfie=1</em>, <em>arfie=1</em>, <em>oorie=1</em>, <em>usl=200</em>, <em>lsl=130</em>, <em>tl=180</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.auto_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.auto_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure automatic adjustment eletrode change current and time.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -172,7 +173,7 @@ as filter(ffi): 0-3 (6,10,18,34)</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.baseline">
-<code class="descname">baseline</code><span class="sig-paren">(</span><em>rft=-1</em>, <em>mhd=0</em>, <em>nhd=0</em>, <em>ncl=0</em>, <em>fdl=0</em>, <em>prox=0</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.baseline" title="Permalink to this definition">¶</a></dt>
+<code class="descname">baseline</code><span class="sig-paren">(</span><em>rft=-1</em>, <em>mhd=0</em>, <em>nhd=0</em>, <em>ncl=0</em>, <em>fdl=0</em>, <em>prox=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.baseline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get raw baslines or configure baseline tracking.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -208,7 +209,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.charge">
-<code class="descname">charge</code><span class="sig-paren">(</span><em>channel</em>, <em>current=0</em>, <em>time=0</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.charge" title="Permalink to this definition">¶</a></dt>
+<code class="descname">charge</code><span class="sig-paren">(</span><em>channel</em>, <em>current=0</em>, <em>time=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.charge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure change current and time per channel.</p>
 <p>These values are determined automatically when auto_config is activated.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -227,7 +228,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.configure">
-<code class="descname">configure</code><span class="sig-paren">(</span><em>cl=3</em>, <em>prox=0</em>, <em>touch=0</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.configure" title="Permalink to this definition">¶</a></dt>
+<code class="descname">configure</code><span class="sig-paren">(</span><em>cl=3</em>, <em>prox=0</em>, <em>touch=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.configure" title="Permalink to this definition">¶</a></dt>
 <dd><p>activate/deactivate measurement.</p>
 <p>Deactivate measurement with prox=0 and touch=0.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -261,7 +262,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.debounce">
-<code class="descname">debounce</code><span class="sig-paren">(</span><em>touch=0</em>, <em>release=-1</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.debounce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.debounce" title="Permalink to this definition">¶</a></dt>
+<code class="descname">debounce</code><span class="sig-paren">(</span><em>touch=0</em>, <em>release=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.debounce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.debounce" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure debouncing.</p>
 <p># of consecutiv measurements with same result needed to trigger state change.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -280,7 +281,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.dump">
-<code class="descname">dump</code><span class="sig-paren">(</span><em>regs=1</em>, <em>up=1</em>, <em>loop=1</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.dump" title="Permalink to this definition">¶</a></dt>
+<code class="descname">dump</code><span class="sig-paren">(</span><em>regs=1</em>, <em>up=1</em>, <em>loop=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.dump" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dump raw values, baseline and touch status to console.</p>
 <p>Uses this repeatedly to adjust the configuration.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -300,7 +301,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.electrode_data">
-<code class="descname">electrode_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.electrode_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.electrode_data" title="Permalink to this definition">¶</a></dt>
+<code class="descname">electrode_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.electrode_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.electrode_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get raw eletrode measurement data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -316,7 +317,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.filter">
-<code class="descname">filter</code><span class="sig-paren">(</span><em>cdc=16</em>, <em>cdt=1</em>, <em>ffi=0</em>, <em>sfi=0</em>, <em>esi=4</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.filter" title="Permalink to this definition">¶</a></dt>
+<code class="descname">filter</code><span class="sig-paren">(</span><em>cdc=16</em>, <em>cdt=1</em>, <em>ffi=0</em>, <em>sfi=0</em>, <em>esi=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Settings for global eletrode charging, sampling and filtering.</p>
 <p>Effective measurement cycle period is sfi*esi.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -338,7 +339,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.gpio_set">
-<code class="descname">gpio_set</code><span class="sig-paren">(</span><em>channel</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.gpio_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_set" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gpio_set</code><span class="sig-paren">(</span><em>channel</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_set" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set GPIO channel.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -356,7 +357,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.gpio_setup">
-<code class="descname">gpio_setup</code><span class="sig-paren">(</span><em>channel</em>, <em>output</em>, <em>mode=0</em>, <em>enable=1</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.gpio_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gpio_setup</code><span class="sig-paren">(</span><em>channel</em>, <em>output</em>, <em>mode=0</em>, <em>enable=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup GPIO configuration.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -383,7 +384,7 @@ when input:
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.gpio_status">
-<code class="descname">gpio_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.gpio_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_status" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gpio_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get GPIO status bits.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -397,7 +398,7 @@ when input:
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.is_touched">
-<code class="descname">is_touched</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.is_touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.is_touched" title="Permalink to this definition">¶</a></dt>
+<code class="descname">is_touched</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.is_touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.is_touched" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get touch status.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -415,7 +416,7 @@ when input:
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.on_touch">
-<code class="descname">on_touch</code><span class="sig-paren">(</span><em>channel</em>, <em>handler</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.on_touch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.on_touch" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_touch</code><span class="sig-paren">(</span><em>channel</em>, <em>handler</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.on_touch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.on_touch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Register touch handler, invoked on state change.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -435,7 +436,7 @@ Pass None to remove any assigned handler.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.out_of_range">
-<code class="descname">out_of_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.out_of_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.out_of_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">out_of_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.out_of_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.out_of_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>get out of range status.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -453,13 +454,13 @@ Pass None to remove any assigned handler.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.reset">
-<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.reset" title="Permalink to this definition">¶</a></dt>
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.reset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform soft reset.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.setup">
-<code class="descname">setup</code><span class="sig-paren">(</span><em>reset=1</em>, <em>channels=12</em>, <em>prox=0</em>, <em>threshold=50</em>, <em>debounce=2</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.setup" title="Permalink to this definition">¶</a></dt>
+<code class="descname">setup</code><span class="sig-paren">(</span><em>reset=1</em>, <em>channels=12</em>, <em>prox=0</em>, <em>threshold=50</em>, <em>debounce=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure the device with sane defaults.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -479,7 +480,7 @@ Pass None to remove any assigned handler.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.threshold">
-<code class="descname">threshold</code><span class="sig-paren">(</span><em>touch</em>, <em>release=-1</em>, <em>channel=-1</em><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.threshold" title="Permalink to this definition">¶</a></dt>
+<code class="descname">threshold</code><span class="sig-paren">(</span><em>touch</em>, <em>release=-1</em>, <em>channel=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.threshold" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set touch and release thresholds.</p>
 <p>Usually touch &gt; release for hysteresis.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -501,7 +502,7 @@ if ommited apply thresholds to all channels</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.touched">
-<code class="descname">touched</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="modules/piripherals/mpr121.html#MPR121.touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.touched" title="Permalink to this definition">¶</a></dt>
+<code class="descname">touched</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.touched" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get touch status bits to the device.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
