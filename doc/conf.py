@@ -109,7 +109,7 @@ html_theme = 'alabaster'
 html_theme_options = {
     'logo': 'logo.png',
     'logo_name': 'true',
-    'description': 'peripherals for the pi',
+    'description': 'Peripherals for the RaspberryPi',
     #'github_banner': 'true',
     'github_user': 'quantenschaum',
     'github_repo': 'piripherals',

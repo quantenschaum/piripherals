@@ -47,9 +47,9 @@
 <p>To fully understand this device, please read the <a class="reference external" href="https://www.sparkfun.com/datasheets/Components/MPR121.pdf">datasheet</a>.</p>
 <div class="section" id="wiring-the-mpr121-to-the-raspberrypi">
 <h2>Wiring the MPR121 to the RaspberryPi<a class="headerlink" href="#wiring-the-mpr121-to-the-raspberrypi" title="Permalink to this headline">¶</a></h2>
-<p>Connect the pins of MPR121 to the RaspberryPi according to the following table.
+<p>Connect the pins of the MPR121 to the RaspberryPi according to the following table.
 In this doc and in the code, all Pi pin numbers are <a class="reference external" href="https://pinout.xyz/">BCM</a> pin numbers, physical
-pin numbers are set in round braces (x).</p>
+pin numbers are set in round braces.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="43%" />
@@ -78,8 +78,8 @@ pin numbers are set in round braces (x).</p>
 </tr>
 </tbody>
 </table>
-<p>Connecting the IRQ line is optional but recommended to avoid unneccessary bus
-traffic and CPU load due to polling. To able to use the IRQ, you need to have
+<p>Connecting the IRQ line is optional but highly recommended to avoid unneccessary bus
+traffic and CPU load due to polling. To be able to use the IRQ, you need to have
 <a class="reference external" href="https://pypi.python.org/pypi/RPi.GPIO">RPi.GPIO</a> installed (<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-rpi.gpio</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">RPi.GPIO</span></code>).
 You may use a different pin, adjust the number accordingly.</p>
 <p>If you want to connect multiple MPR121s to the same bus, you can change their
@@ -108,20 +108,27 @@ add the lines:</p>
 </div>
 <p>For MPR121 being able to access the I2C bus, you need to have a Python smbus
 implementation installed. Use <code class="docutils literal"><span class="pre">python-smbus</span></code> from the distro or <a class="reference external" href="https://pypi.python.org/pypi/smbus2">smbus2</a>
-(<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-smbus</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">smbus2</span></code>).</p>
+(<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-smbus</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">smbus2</span></code>). Other implementations
+may work, too.</p>
 </div>
 <div class="section" id="using-mpr121">
 <h2>Using MPR121<a class="headerlink" href="#using-mpr121" title="Permalink to this headline">¶</a></h2>
-<p>Attach the MPR121 to the Pi and use it like:</p>
+<p>Attach the MPR121 to the Pi as described above and use it like:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">piripherals</span> <span class="k">import</span> <span class="n">MPR121</span>
 
-<span class="n">mpr</span> <span class="o">=</span> <span class="n">MPR121</span><span class="p">(</span><span class="n">irq</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="c1"># MPR121 should be up and running with 12 channels</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span>
-    <span class="n">mpr</span><span class="o">.</span><span class="n">on_touch</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="c1"># print status on touch and release</span>
+<span class="c1"># MPR121 should come up and be running with 12 channels</span>
+<span class="n">mpr</span> <span class="o">=</span> <span class="n">MPR121</span><span class="p">(</span><span class="n">irq</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span> <span class="c1"># print status on touch and release</span>
+    <span class="n">mpr</span><span class="o">.</span><span class="n">on_touch</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>Use the <code class="docutils literal"><span class="pre">mpr121-dump</span></code> script to examine the MPR121’s response and to tune
+<p>Simply instanciante it and assign touch handlers. For fine tuning and to userthe
+GPIO functionality, see the doc below.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Use the <code class="docutils literal"><span class="pre">mpr121-dump</span></code> script to examine the MPR121’s response and to tune
 the settings.</p>
+</div>
 <dl class="class">
 <dt id="piripherals.mpr121.MPR121">
 <em class="property">class </em><code class="descclassname">piripherals.mpr121.</code><code class="descname">MPR121</code><span class="sig-paren">(</span><em>addr=90</em>, <em>bus=1</em>, <em>irq=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121" title="Permalink to this definition">¶</a></dt>
@@ -211,7 +218,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 <dt id="piripherals.mpr121.MPR121.charge">
 <code class="descname">charge</code><span class="sig-paren">(</span><em>channel</em>, <em>current=0</em>, <em>time=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.charge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configure change current and time per channel.</p>
-<p>These values are determined automatically when auto_config is activated.</p>
+<p>These values are determined automatically when <code class="docutils literal"><span class="pre">auto_config()</span></code> is activated.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -228,9 +235,10 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 
 <dl class="method">
 <dt id="piripherals.mpr121.MPR121.configure">
-<code class="descname">configure</code><span class="sig-paren">(</span><em>cl=3</em>, <em>prox=0</em>, <em>touch=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.configure" title="Permalink to this definition">¶</a></dt>
+<code class="descname">configure</code><span class="sig-paren">(</span><em>cl=3</em>, <em>prox=0</em>, <em>touch=12</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.configure" title="Permalink to this definition">¶</a></dt>
 <dd><p>activate/deactivate measurement.</p>
-<p>Deactivate measurement with prox=0 and touch=0.</p>
+<p>Measurement is activated when setting prox&gt;0 or touch&gt;0 (run mode).
+Deactivate measurement with prox=0 and touch=0 (stop mode).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -238,7 +246,7 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>cl</strong> (<em>int</em>) – calibration lock:
 0 = baseline tracking enabled,
-1 = baseline tracking disbled,
+1 = baseline tracking disabled,
 2 = baseline tracking enabled, init 5MSBs with initial measurement,
 3 = baseline tracking enabled, init with initial measurement.</li>
 <li><strong>prox</strong> (<em>int</em>) – proximity detection:
@@ -359,6 +367,8 @@ rate of operation of the filer, greater values makes it operate slower.</li>
 <dt id="piripherals.mpr121.MPR121.gpio_setup">
 <code class="descname">gpio_setup</code><span class="sig-paren">(</span><em>channel</em>, <em>output</em>, <em>mode=0</em>, <em>enable=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_setup" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup GPIO configuration.</p>
+<p>If the channel is configured as touch eletrode with <code class="docutils literal"><span class="pre">configure()</span></code>, then
+this GPIO setting has not effect. Sensing eletrode have precedence.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -540,7 +550,7 @@ if ommited apply thresholds to all channels</li>
 
 
 
-<p class="blurb">peripherals for the pi</p>
+<p class="blurb">Peripherals for the RaspberryPi</p>
 
 
 

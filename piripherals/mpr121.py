@@ -8,9 +8,9 @@ To fully understand this device, please read the datasheet_.
 Wiring the MPR121 to the RaspberryPi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Connect the pins of MPR121 to the RaspberryPi according to the following table.
+Connect the pins of the MPR121 to the RaspberryPi according to the following table.
 In this doc and in the code, all Pi pin numbers are BCM_ pin numbers, physical
-pin numbers are set in round braces (x).
+pin numbers are set in round braces.
 
 ========= ============
 MPR121    RaspberryPi
@@ -22,8 +22,8 @@ SCL       BCM 3 (5)
 IRQ*      BCM 4 (7)
 ========= ============
 
-Connecting the IRQ line is optional but recommended to avoid unneccessary bus
-traffic and CPU load due to polling. To able to use the IRQ, you need to have
+Connecting the IRQ line is optional but highly recommended to avoid unneccessary bus
+traffic and CPU load due to polling. To be able to use the IRQ, you need to have
 RPi.GPIO_ installed (``apt-get install python-rpi.gpio`` or ``pip install RPi.GPIO``).
 You may use a different pin, adjust the number accordingly.
 
@@ -52,24 +52,29 @@ and list the addresses of connected devices::
 
     i2cdetect -y 1
 
-
 For MPR121 being able to access the I2C bus, you need to have a Python smbus
 implementation installed. Use ``python-smbus`` from the distro or smbus2_
-(``apt-get install python-smbus`` or ``pip install smbus2``).
+(``apt-get install python-smbus`` or ``pip install smbus2``). Other implementations
+may work, too.
 
 Using MPR121
 ~~~~~~~~~~~~
 
-Attach the MPR121 to the Pi and use it like::
+Attach the MPR121 to the Pi as described above and use it like::
 
     from piripherals import MPR121
 
-    mpr = MPR121(irq=4) # MPR121 should be up and running with 12 channels
-    for i in range(12):
-        mpr.on_touch(i, lambda *x: print(x)) # print status on touch and release
+    # MPR121 should come up and be running with 12 channels
+    mpr = MPR121(irq=4)
+    for i in range(12): # print status on touch and release
+        mpr.on_touch(i, lambda *x: print(x))
 
-Use the ``mpr121-dump`` script to examine the MPR121's response and to tune
-the settings.
+Simply instanciante it and assign touch handlers. For fine tuning and to userthe
+GPIO functionality, see the doc below.
+
+.. note::
+    Use the ``mpr121-dump`` script to examine the MPR121's response and to tune
+    the settings.
 
 .. _datasheet: https://www.sparkfun.com/datasheets/Components/MPR121.pdf
 .. _BCM: https://pinout.xyz/
@@ -119,18 +124,6 @@ ACNF_USL = 0x7d  # auto config
 ACNF_LSL = 0x7e  # auto config
 ACNF_TL = 0x7f  # auto config target level
 SRESET = 0x80  # soft reset
-
-
-def h(v):
-    return '0x{:02x}'.format(v)
-
-
-def b(v):
-    return '{:08b}'.format(v)
-
-
-def w(v):
-    return '{:016b}'.format(v)
 
 
 def not_raising(func):
@@ -298,15 +291,16 @@ class MPR121:
         """Perform soft reset."""
         self._bus.write_byte(SRESET, 0x63)
 
-    def configure(self, cl=3, prox=0, touch=0):
+    def configure(self, cl=3, prox=0, touch=12):
         """activate/deactivate measurement.
 
-        Deactivate measurement with prox=0 and touch=0.
+        Measurement is activated when setting prox>0 or touch>0 (run mode).
+        Deactivate measurement with prox=0 and touch=0 (stop mode).
 
         Args:
             cl (int): calibration lock:
                 0 = baseline tracking enabled,
-                1 = baseline tracking disbled,
+                1 = baseline tracking disabled,
                 2 = baseline tracking enabled, init 5MSBs with initial measurement,
                 3 = baseline tracking enabled, init with initial measurement.
             prox (int): proximity detection:
@@ -433,7 +427,7 @@ class MPR121:
     def charge(self, channel, current=0, time=0):
         """Configure change current and time per channel.
 
-        These values are determined automatically when auto_config is activated.
+        These values are determined automatically when ``auto_config()`` is activated.
 
         Args:
             channel (int): channel to configure 0-11
@@ -505,6 +499,9 @@ class MPR121:
 
     def gpio_setup(self, channel, output, mode=0, enable=1):
         """Setup GPIO configuration.
+
+        If the channel is configured as touch eletrode with ``configure()``, then
+        this GPIO setting has not effect. Sensing eletrode have precedence.
 
         Args:
             channel (int): channel to configure (4-11)
@@ -630,7 +627,7 @@ class MPR121:
         """
         if reset:
             self.reset()
-        self.configure()
+        self.configure(prox=0, touch=0)
         self.filter(cdc=16, cdt=1, ffi=1, sfi=1, esi=0)
         self.auto_config()
         self.threshold(touch=threshold)
@@ -639,7 +636,7 @@ class MPR121:
         for i in range(2):
             self.baseline(rft=i, mhd=5, nhd=1, ncl=3, fdl=10)
             self.baseline(rft=i, mhd=1, nhd=1, ncl=3, fdl=10, prox=1)
-        self.configure(touch=channels, prox=prox)
+        self.configure(prox=prox, touch=channels)
 
 
 if __name__ == '__main__': main()

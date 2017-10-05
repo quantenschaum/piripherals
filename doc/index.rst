@@ -5,7 +5,6 @@ Welcome to piripherals' documentation!
    :maxdepth: 4
    :caption: Contents:
 
-   foo
    piripherals
 
 
