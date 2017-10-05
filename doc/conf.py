@@ -18,7 +18,7 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, u'/home/al/Projekte/piripherals')
+# sys.path.insert(0, u'/home/...')
 
 # -- General configuration ------------------------------------------------
 
@@ -107,7 +107,7 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    #'logo': 'logo.png',
+    'logo': 'logo.png',
     'logo_name': 'true',
     'description': 'peripherals for the pi',
     #'github_banner': 'true',
