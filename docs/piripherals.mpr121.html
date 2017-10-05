@@ -1,0 +1,585 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>piripherals.mpr121 module &#8212; piripherals 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="piripherals.led module" href="piripherals.led.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-piripherals.mpr121">
+<span id="piripherals-mpr121-module"></span><h1>piripherals.mpr121 module<a class="headerlink" href="#module-piripherals.mpr121" title="Permalink to this headline">¶</a></h1>
+<p>a sane and complete interface to the MPR121 touch sensor</p>
+<p>Since Pythagoras, we know that <span class="math">\(a^2 + b^2 = c^2\)</span>.</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}(a + b)^2 = a^2 + 2ab + b^2\\(a - b)^2 = a^2 - 2ab + b^2\end{aligned}\end{align} \]</div>
+<p>This is thought to be a replacement of the incomplete and undocumented
+<a class="reference external" href="https://github.com/adafruit/Adafruit_Python_MPR121">Adafruit.MPR121</a> library.</p>
+<p>To fully understand this device, please read the <a class="reference external" href="https://www.sparkfun.com/datasheets/Components/MPR121.pdf">datasheet</a>.</p>
+<div class="section" id="wiring-the-mpr121-to-the-raspberripi">
+<h2>Wiring the MPR121 to the RaspberriPi<a class="headerlink" href="#wiring-the-mpr121-to-the-raspberripi" title="Permalink to this headline">¶</a></h2>
+<p>Connect the pins of MPR121 to the RaspberriPi according to the following table.
+In this doc and in the code, all Pi pin numbers are <a class="reference external" href="https://pinout.xyz/">BCM</a> pin numbers, physical
+pin numbers are set in round braces (x).</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="43%" />
+<col width="57%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">MPR121</th>
+<th class="head">RaspberriPi</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>3.3V</td>
+<td>3.3V (1)</td>
+</tr>
+<tr class="row-odd"><td>GND</td>
+<td>GND (6)</td>
+</tr>
+<tr class="row-even"><td>SDA</td>
+<td>BCM 2 (3)</td>
+</tr>
+<tr class="row-odd"><td>SCL</td>
+<td>BCM 3 (5)</td>
+</tr>
+<tr class="row-even"><td>IRQ*</td>
+<td>BCM 4 (7)</td>
+</tr>
+</tbody>
+</table>
+<p>Connecting the IRQ line is optional but recommended to avoid unneccessary bus
+traffic and CPU load due to polling. To able to use the IRQ, you need to have
+<a class="reference external" href="https://pypi.python.org/pypi/RPi.GPIO">RPi.GPIO</a> installed (<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-rpi.gpio</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">RPi.GPIO</span></code>).</p>
+<p>If you want to connect multiple MPR121s to the same bus, you can change their
+address with the address pin. Refer to the <a class="reference external" href="https://www.sparkfun.com/datasheets/Components/MPR121.pdf">datasheet</a> on how to do this.</p>
+</div>
+<div class="section" id="enable-i2c-access">
+<h2>Enable I2C access<a class="headerlink" href="#enable-i2c-access" title="Permalink to this headline">¶</a></h2>
+<p>The MPR121 uses I2C for communication. On the RaspberriPi running
+<a class="reference external" href="https://www.raspberrypi.org/downloads/raspbian/">Raspbian</a> Stretch, you need to enable the I2C bus. To <code class="docutils literal"><span class="pre">/boot/config.txt</span></code>
+add the lines:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">dtparam</span><span class="o">=</span><span class="n">i2c_arm</span><span class="o">=</span><span class="n">on</span>
+<span class="n">dtparam</span><span class="o">=</span><span class="n">i2c1</span><span class="o">=</span><span class="n">on</span>
+</pre></div>
+</div>
+<p>and to <code class="docutils literal"><span class="pre">/etc/modules</span></code> add:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">i2c</span><span class="o">-</span><span class="n">dev</span>
+</pre></div>
+</div>
+<p>This should enable the <code class="docutils literal"><span class="pre">/dev/i2c-1</span></code> (bus=1) device on boot. Install i2c-tools with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">i2c</span><span class="o">-</span><span class="n">tools</span>
+</pre></div>
+</div>
+<p>and list the addresses of connected devices:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">i2cdetect</span> <span class="o">-</span><span class="n">y</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>For MPR121 being able to access the I2C bus, you need to have a Python smbus
+implementation installed. Use <code class="docutils literal"><span class="pre">python-smbus</span></code> from the distro or <a class="reference external" href="https://pypi.python.org/pypi/smbus2">smbus2</a>
+(<code class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-smbus</span></code> or <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">smbus2</span></code>).</p>
+</div>
+<div class="section" id="using-mpr121">
+<h2>Using MPR121<a class="headerlink" href="#using-mpr121" title="Permalink to this headline">¶</a></h2>
+<p>Attach the MPR121 to the Pi and use it like:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">piripherals</span> <span class="k">import</span> <span class="n">MPR121</span>
+
+<span class="n">mpr</span> <span class="o">=</span> <span class="n">MPR121</span><span class="p">(</span><span class="n">irq</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span> <span class="c1"># MPR121 should be up and running with 12 channels</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">):</span>
+    <span class="n">mpr</span><span class="o">.</span><span class="n">on_touch</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="c1"># print status on touch and release</span>
+</pre></div>
+</div>
+<p>Use the <code class="docutils literal"><span class="pre">mpr121-dump</span></code> script to examine the MPR121’s response and to tune
+the settings.</p>
+<dl class="class">
+<dt id="piripherals.mpr121.MPR121">
+<em class="property">class </em><code class="descclassname">piripherals.mpr121.</code><code class="descname">MPR121</code><span class="sig-paren">(</span><em>addr=90</em>, <em>bus=1</em>, <em>irq=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121" title="Permalink to this definition">¶</a></dt>
+<dd><p>MPR121 capacitive touch sensor and GPIO/LED controller.</p>
+<p>It will be configured with sane defaults and started immediately.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>addr</strong> (<em>int</em>) – I2C address of the device</li>
+<li><strong>bus</strong> (<em>int</em>) – I2C bus, 1 = /dev/i2c-1</li>
+<li><strong>irq</strong> (<em>int</em>) – GPIO BCM pin # that is connect to interrupt line,
+0=disbale IRQ, use polling</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.auto_config">
+<code class="descname">auto_config</code><span class="sig-paren">(</span><em>ace=1</em>, <em>are=1</em>, <em>bva=3</em>, <em>retry=2</em>, <em>afes=1</em>, <em>scts=0</em>, <em>acfie=1</em>, <em>arfie=1</em>, <em>oorie=1</em>, <em>usl=200</em>, <em>lsl=130</em>, <em>tl=180</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.auto_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.auto_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure automatic adjustment eletrode change current and time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>ace</strong> (<em>bool</em>) – enable auto configuration</li>
+<li><strong>are</strong> (<em>bool</em>) – enable auto reconfiguration</li>
+<li><strong>bva</strong> (<em>int</em>) – baseline adjustment after current and time have been set:
+0 = no change,
+1 = set to zero,
+2 = set 5MSBs to measured value,
+3 = set to measured value.</li>
+<li><strong>retry</strong> (<em>int</em>) – # of retries for auto configuration: 0-3 (0,2,4,8)</li>
+<li><strong>afes</strong> (<em>int</em>) – # of AFE sample during search process, set to values
+as filter(ffi): 0-3 (6,10,18,34)</li>
+<li><strong>scts</strong> (<em>bool</em>) – skip charge time search</li>
+<li><strong>acfie</strong> (<em>bool</em>) – enable IRQ on auto config failure</li>
+<li><strong>arfie</strong> (<em>bool</em>) – enable IRQ on auto reconfig failure</li>
+<li><strong>oorie</strong> (<em>bool</em>) – enable IRQ on out of range event</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.baseline">
+<code class="descname">baseline</code><span class="sig-paren">(</span><em>rft=-1</em>, <em>mhd=0</em>, <em>nhd=0</em>, <em>ncl=0</em>, <em>fdl=0</em>, <em>prox=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get raw baslines or configure baseline tracking.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rft</strong> (<em>int</em>) – scenario to set the values for:
+0 = rising, raw eletrode data &gt; current baseline,
+1 = falling, raw eletrode data &lt; current baseline,
+2 = touched, eletrode in touch status.</li>
+<li><strong>mhd</strong> (<em>int</em>) – max. half delta 0-63 (for rft=0 or 1 only),
+largest magnitude of variation to pass through the baseline filter.</li>
+<li><strong>nhd</strong> (<em>int</em>) – noise half delta 0-63,
+incremental change when non-noise drift is detected.</li>
+<li><strong>ncl</strong> (<em>int</em>) – noise count limit 0-255,
+number of samples consecutively greater than mhd necessary
+before if can be determined that it is non-noise.</li>
+<li><strong>fdl</strong> (<em>int</em>) – filter delay count limit 0-255,
+rate of operation of the filer, greater values makes it operate slower.</li>
+<li><strong>prox</strong> (<em>bool</em>) – if True set values for proximity mode.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">raw 10 bit baseline values per eletrode, if invoked with no args.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of ints</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.charge">
+<code class="descname">charge</code><span class="sig-paren">(</span><em>channel</em>, <em>current=0</em>, <em>time=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.charge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.charge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure change current and time per channel.</p>
+<p>These values are determined automatically when auto_config is activated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>int</em>) – channel to configure 0-11</li>
+<li><strong>current</strong> (<em>int</em>) – charge current</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.configure">
+<code class="descname">configure</code><span class="sig-paren">(</span><em>cl=3</em>, <em>prox=0</em>, <em>touch=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.configure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.configure" title="Permalink to this definition">¶</a></dt>
+<dd><p>activate/deactivate measurement.</p>
+<p>Deactivate measurement with prox=0 and touch=0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cl</strong> (<em>int</em>) – calibration lock:
+0 = baseline tracking enabled,
+1 = baseline tracking disbled,
+2 = baseline tracking enabled, init 5MSBs with initial measurement,
+3 = baseline tracking enabled, init with initial measurement.</li>
+<li><strong>prox</strong> (<em>int</em>) – proximity detection:
+0 = disabled,
+1 = enabled on electrodes 0-1,
+2 = enabled on electrodes 0-3,
+3 = enabled on electrodes 0-11.</li>
+<li><strong>touch</strong> (<em>int</em>) – enable electrodes:
+0 = disabled,
+1 = enable electrode 0,
+2 = enable electrodes 0-1,
+3 = enable electrodes 0-2,
+…,
+12 = enable electrodes 0-11.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.debounce">
+<code class="descname">debounce</code><span class="sig-paren">(</span><em>touch=0</em>, <em>release=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.debounce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.debounce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure debouncing.</p>
+<p># of consecutiv measurements with same result needed to trigger state change.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>touch</strong> (<em>int</em>) – for touch 0-7</li>
+<li><strong>release</strong> (<em>int</em>) – for release 0-7, if ommited release=touch</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.dump">
+<code class="descname">dump</code><span class="sig-paren">(</span><em>regs=1</em>, <em>up=1</em>, <em>loop=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump raw values, baseline and touch status to console.</p>
+<p>Uses this repeatedly to adjust the configuration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>regs</strong> (<em>bool</em>) – dump register values</li>
+<li><strong>up</strong> (<em>bool</em>) – move cursor up after dump</li>
+<li><strong>loop</strong> (<em>int</em>) – run in loop for given # of rounds</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.electrode_data">
+<code class="descname">electrode_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.electrode_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.electrode_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get raw eletrode measurement data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">raw 10 bit eletrode measurement per eletrode</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list of int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>cdc=16</em>, <em>cdt=1</em>, <em>ffi=0</em>, <em>sfi=0</em>, <em>esi=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Settings for global eletrode charging, sampling and filtering.</p>
+<p>Effective measurement cycle period is sfi*esi.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cdc</strong> (<em>int</em>) – charge-discharge-current 0-63 (uA)</li>
+<li><strong>cdt</strong> (<em>int</em>) – charge-discharge-time 0-7 (0.5*2**(cdt-1) us)</li>
+<li><strong>ffi</strong> (<em>int</em>) – first filter iterations 0-3 (6,10,18,34)</li>
+<li><strong>sfi</strong> (<em>int</em>) – second filter iterations 0-3 (4,6,10,18)</li>
+<li><strong>esi</strong> (<em>int</em>) – eletrode sample interval 0-7 (2**esi ms)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.gpio_set">
+<code class="descname">gpio_set</code><span class="sig-paren">(</span><em>channel</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set GPIO channel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>int</em>) – channel to set 4-11</li>
+<li><strong>value</strong> (<em>bool</em>) – set 1=HIGH or 0=LOW</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.gpio_setup">
+<code class="descname">gpio_setup</code><span class="sig-paren">(</span><em>channel</em>, <em>output</em>, <em>mode=0</em>, <em>enable=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup GPIO configuration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>int</em>) – channel to configure (4-11)</li>
+<li><strong>output</strong> (<em>bool</em>) – configure as 1=output or 0=input</li>
+<li><strong>mode</strong> (<em>int</em>) – pin mode, when output:
+0 = CMOS output,
+2 = open drain output, low side MOS only,
+3 = open drain output, high side MOS only,
+when input:
+0 = input,
+2 = input with pull-down,
+3 = input with pull-up.</li>
+<li><strong>enable</strong> (<em>bool</em>) – enable/disbale GPIO functionality</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.gpio_status">
+<code class="descname">gpio_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.gpio_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.gpio_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get GPIO status bits.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">GPIO status byte for channels 4-11</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.is_touched">
+<code class="descname">is_touched</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.is_touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.is_touched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get touch status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>channel</strong> (<em>int</em>) – channel to get status for, 0-12</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if touched</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.on_touch">
+<code class="descname">on_touch</code><span class="sig-paren">(</span><em>channel</em>, <em>handler</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.on_touch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.on_touch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register touch handler, invoked on state change.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>int</em>) – channel to attach the handler to (0-12, 12=proximity)</li>
+<li><strong>handler</strong> (<em>callable</em><em>(</em><em>boolean</em><em>, </em><em>[</em><em>channel</em><em>]</em><em>)</em>) – handler,
+it gets passed a channel number [optional] and a boolean (True=touched),
+Pass None to remove any assigned handler.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.out_of_range">
+<code class="descname">out_of_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.out_of_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.out_of_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>get out of range status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">first 12 bits contain oor status.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">Exception</span></code> – if auto (re)config has failed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform soft reset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><em>reset=1</em>, <em>channels=12</em>, <em>prox=0</em>, <em>threshold=50</em>, <em>debounce=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the device with sane defaults.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>reset</strong> (<em>bool</em>) – perform soft reset</li>
+<li><strong>channels</strong> (<em>int</em>) – number of channels to activate 0-12</li>
+<li><strong>threshold</strong> (<em>int</em>) – touch threshold 0-255</li>
+<li><strong>debounce</strong> (<em>int</em>) – debounce count 0-7</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.threshold">
+<code class="descname">threshold</code><span class="sig-paren">(</span><em>touch</em>, <em>release=-1</em>, <em>channel=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.threshold"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.threshold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set touch and release thresholds.</p>
+<p>Usually touch &gt; release for hysteresis.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>touch</strong> (<em>int</em>) – touch threshold 0-255</li>
+<li><strong>release</strong> (<em>int</em>) – release threshold 0-255
+if ommited release=0.6*touch</li>
+<li><strong>channel</strong> (<em>int</em>) – channel to set thresholds for 0-12 (12=proximity)
+if ommited apply thresholds to all channels</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="piripherals.mpr121.MPR121.touched">
+<code class="descname">touched</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/piripherals/mpr121.html#MPR121.touched"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#piripherals.mpr121.MPR121.touched" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get touch status bits to the device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">first 12 bits contain touch status, 1=touched</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">Exception</span></code> – on overcurrent</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">piripherals.mpr121 module</a><ul>
+<li><a class="reference internal" href="#wiring-the-mpr121-to-the-raspberripi">Wiring the MPR121 to the RaspberriPi</a></li>
+<li><a class="reference internal" href="#enable-i2c-access">Enable I2C access</a></li>
+<li><a class="reference internal" href="#using-mpr121">Using MPR121</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="piripherals.html">piripherals package</a><ul>
+      <li>Previous: <a href="piripherals.led.html" title="previous chapter">piripherals.led module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, quantenschaum.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+    <a href="https://github.com/quantenschaum/piripherals" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

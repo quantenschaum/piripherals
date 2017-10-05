@@ -22,9 +22,3 @@ setup(
     entry_points={
         'console_scripts': ['mpr121-dump = piripherals.mpr121:main']
     })
-
-# for the docs
-# https://docs.readthedocs.io/en/latest/getting_started.html
-# http://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html
-# http://www.sphinx-doc.org/en/stable/man/sphinx-apidoc.html#sphinx-apidoc-manual-page
-# http://recommonmark.readthedocs.io/en/latest/auto_structify.html
