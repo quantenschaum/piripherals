@@ -1,15 +1,5 @@
 """a sane and complete interface to the MPR121 touch sensor
 
-Since Pythagoras, we know that :math:`a^2 + b^2 = c^2`.
-
-
-.. math::
-
-   (a + b)^2 = a^2 + 2ab + b^2
-
-   (a - b)^2 = a^2 - 2ab + b^2
-
-
 This is thought to be a replacement of the incomplete and undocumented
 Adafruit.MPR121_ library.
 
