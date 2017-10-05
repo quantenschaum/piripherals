@@ -107,18 +107,30 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    'logo': 'logo.png',
+    #'logo': 'logo.png',
     'logo_name': 'true',
     'description': 'peripherals for the pi',
-    'github_banner': 'true',
-    #'github_button': 'true',
+    #'github_banner': 'true',
     'github_user': 'quantenschaum',
     'github_repo': 'piripherals',
+    'analytics_id': 'UA-107589767-1',
 }
+
+# https://github.com/bitprophet/alabaster/issues/97
+html_sidebars = {
+    '**': [
+        'about.html',
+        'navigation.html',
+        #'localtoc.html',
+        #'relations.html',
+        'searchbox.html',
+    ]
+}
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-#html_static_path = ['_static']
+html_static_path = ['_static']
 
 html_show_sourcelink = False
 
