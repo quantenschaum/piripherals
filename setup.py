@@ -16,7 +16,7 @@ setup(
     author="quantenschaum",
     author_email="software@louisenhof2.de",
     description=
-    "a collection of classes to interact with peripherals for the RaspberriPi",
+    "a collection of classes to interact with peripherals for the RaspberryPi",
     license="GPL-3.0",
     url="https://github.com/quantenschaum/piripherals",
     entry_points={

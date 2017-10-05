@@ -5,15 +5,15 @@ Adafruit.MPR121_ library.
 
 To fully understand this device, please read the datasheet_.
 
-Wiring the MPR121 to the RaspberriPi
+Wiring the MPR121 to the RaspberryPi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Connect the pins of MPR121 to the RaspberriPi according to the following table.
+Connect the pins of MPR121 to the RaspberryPi according to the following table.
 In this doc and in the code, all Pi pin numbers are BCM_ pin numbers, physical
 pin numbers are set in round braces (x).
 
 ========= ============
-MPR121    RaspberriPi
+MPR121    RaspberryPi
 ========= ============
 3.3V      3.3V (1)
 GND       GND (6)
@@ -33,7 +33,7 @@ address with the address pin. Refer to the datasheet_ on how to do this.
 Enable I2C access
 ~~~~~~~~~~~~~~~~~
 
-The MPR121 uses I2C for communication. On the RaspberriPi running
+The MPR121 uses I2C for communication. On the RaspberryPi running
 Raspbian_ Stretch, you need to enable the I2C bus. To ``/boot/config.txt``
 add the lines::
 

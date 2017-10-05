@@ -45,9 +45,9 @@
 <p>This is thought to be a replacement of the incomplete and undocumented
 <a class="reference external" href="https://github.com/adafruit/Adafruit_Python_MPR121">Adafruit.MPR121</a> library.</p>
 <p>To fully understand this device, please read the <a class="reference external" href="https://www.sparkfun.com/datasheets/Components/MPR121.pdf">datasheet</a>.</p>
-<div class="section" id="wiring-the-mpr121-to-the-raspberripi">
-<h2>Wiring the MPR121 to the RaspberriPi<a class="headerlink" href="#wiring-the-mpr121-to-the-raspberripi" title="Permalink to this headline">¶</a></h2>
-<p>Connect the pins of MPR121 to the RaspberriPi according to the following table.
+<div class="section" id="wiring-the-mpr121-to-the-raspberrypi">
+<h2>Wiring the MPR121 to the RaspberryPi<a class="headerlink" href="#wiring-the-mpr121-to-the-raspberrypi" title="Permalink to this headline">¶</a></h2>
+<p>Connect the pins of MPR121 to the RaspberryPi according to the following table.
 In this doc and in the code, all Pi pin numbers are <a class="reference external" href="https://pinout.xyz/">BCM</a> pin numbers, physical
 pin numbers are set in round braces (x).</p>
 <table border="1" class="docutils">
@@ -57,7 +57,7 @@ pin numbers are set in round braces (x).</p>
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">MPR121</th>
-<th class="head">RaspberriPi</th>
+<th class="head">RaspberryPi</th>
 </tr>
 </thead>
 <tbody valign="top">
@@ -87,7 +87,7 @@ address with the address pin. Refer to the <a class="reference external" href="h
 </div>
 <div class="section" id="enable-i2c-access">
 <h2>Enable I2C access<a class="headerlink" href="#enable-i2c-access" title="Permalink to this headline">¶</a></h2>
-<p>The MPR121 uses I2C for communication. On the RaspberriPi running
+<p>The MPR121 uses I2C for communication. On the RaspberryPi running
 <a class="reference external" href="https://www.raspberrypi.org/downloads/raspbian/">Raspbian</a> Stretch, you need to enable the I2C bus. To <code class="docutils literal"><span class="pre">/boot/config.txt</span></code>
 add the lines:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">dtparam</span><span class="o">=</span><span class="n">i2c_arm</span><span class="o">=</span><span class="n">on</span>
@@ -532,7 +532,7 @@ if ommited apply thresholds to all channels</li>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">piripherals.mpr121 module</a><ul>
-<li><a class="reference internal" href="#wiring-the-mpr121-to-the-raspberripi">Wiring the MPR121 to the RaspberriPi</a></li>
+<li><a class="reference internal" href="#wiring-the-mpr121-to-the-raspberrypi">Wiring the MPR121 to the RaspberryPi</a></li>
 <li><a class="reference internal" href="#enable-i2c-access">Enable I2C access</a></li>
 <li><a class="reference internal" href="#using-mpr121">Using MPR121</a></li>
 </ul>

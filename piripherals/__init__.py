@@ -1,4 +1,4 @@
-"""a collection of classes to interact with peripherals for the RaspberriPi
+"""a collection of classes to interact with peripherals for the RaspberryPi
 """
 
 # https://stackoverflow.com/questions/1523427/what-is-the-common-header-format-of-python-files
