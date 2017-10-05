@@ -25,6 +25,7 @@ IRQ*      BCM 4 (7)
 Connecting the IRQ line is optional but recommended to avoid unneccessary bus
 traffic and CPU load due to polling. To able to use the IRQ, you need to have
 RPi.GPIO_ installed (``apt-get install python-rpi.gpio`` or ``pip install RPi.GPIO``).
+You may use a different pin, adjust the number accordingly.
 
 If you want to connect multiple MPR121s to the same bus, you can change their
 address with the address pin. Refer to the datasheet_ on how to do this.
