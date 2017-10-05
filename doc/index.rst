@@ -1,5 +1,5 @@
-Welcome to piripherals' documentation!
-=======================================
+piripherals' documentation
+===========================
 
 .. toctree::
    :maxdepth: 4
