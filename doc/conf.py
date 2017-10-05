@@ -44,8 +44,8 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
-    'sphinxtogithub',
-    #'sphinx.ext.mathjax'
+    'sphinxtogithub',  # https://github.com/michaeljones/sphinx-to-github
+    #'sphinx.ext.mathjax', # http://www.sphinx-doc.org/en/stable/ext/math.html#module-sphinx.ext.mathjax
 ]
 
 #mathjax_path = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
