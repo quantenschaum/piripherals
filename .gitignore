@@ -3,9 +3,5 @@
 __pychache__
 !*.py
 !/piripherals
-!/docs
-/docs/.doctrees
-/docs/sources
-/docs/_sources
 !/doc
 /doc/_build
