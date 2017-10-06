@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = python -msphinx
+SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 
@@ -45,16 +45,21 @@ help:
 	@echo "  doctest     to run all doctests embedded in the documentation (if enabled)"
 	@echo "  coverage    to run coverage check of the documentation (if enabled)"
 	@echo "  dummy       to check syntax errors of document sources"
+	@echo "  auto        to run sphinx-autobuild"
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILDDIR)/*
+	rm -rf $(BUILDDIR)/ ../gh-pages/*
+
+.PHONY: auto
+auto:
+	sphinx-autobuild . ../gh-pages/ -z ../piripherals -B
 
 .PHONY: html
 html:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) ../docs #$(BUILDDIR)/html
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) ../gh-pages #$(BUILDDIR)/html
 	@echo
-	@echo "Build finished. The HTML pages are in ../docs"
+	@echo "Build finished. The HTML pages are in ../gh-pages"
 
 .PHONY: dirhtml
 dirhtml:
