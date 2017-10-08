@@ -20,5 +20,8 @@ setup(
     license="GPL-3.0",
     url="https://github.com/quantenschaum/piripherals",
     entry_points={
-        'console_scripts': ['mpr121-dump = piripherals.mpr121:main']
+        'console_scripts': [
+            'mpr121-dump = piripherals.mpr121:main',
+            'led-test = piripherals.led:main [LED]',
+        ]
     })
