@@ -12,6 +12,7 @@ setup(
         'LED': ["rpi_ws281x"],
         'GPIO': ['RPi.GPIO'],
         'I2C': ['smbus2'],
+        'MPD': ['python-mpd2']
     },
     author="quantenschaum",
     author_email="software@louisenhof2.de",

@@ -84,14 +84,8 @@ GPIO functionality, see the doc below.
 .. _Adafruit.MPR121: https://github.com/adafruit/Adafruit_Python_MPR121
 """
 
-# http://python-future.org/compatible_idioms.html
-from __future__ import print_function
-from __future__ import division
-
 __all__ = ['MPR121']
 
-from functools import partial
-from time import sleep
 from .util import *
 
 NCH = 13  # number of channels
@@ -132,13 +126,24 @@ class MPR121:
     It will be configured with sane defaults and started immediately.
 
     Args:
-        addr (int): I2C address of the device
         bus (int): I2C bus, 1 = /dev/i2c-1
+        addr (int): I2C address of the device
         irq (int): GPIO BCM pin # that is connect to interrupt line,
             0=disbale IRQ, use polling
+        handlers (bool): enable IRQ handler/polling
+        setup (bool): configure with defaults or just reset
+        reset (bool): reset on initialization
+        **kwargs: arguments to setup()
     """
 
-    def __init__(self, addr=0x5a, bus=1, irq=0):
+    def __init__(self,
+                 bus=1,
+                 addr=0x5a,
+                 irq=0,
+                 handlers=1,
+                 setup=1,
+                 reset=1,
+                 **kwargs):
         from .bus import Bus
         self.addr = addr
         self.overcurrent = False
@@ -146,18 +151,23 @@ class MPR121:
         self._handlers = [noop] * NCH
         self._touched = 0
 
-        def handle_touch():
-            t0 = self._touched
-            t1 = self._touched = self.touched()
-            ch = t0 ^ t1
-            if ch: self._handle_touch(t1, ch)
+        if handlers:
+            if irq:
+                IRQHandler(irq, self.update_touch_state)
+            else:
+                Poller(self.update_touch_state)
 
-        if irq:
-            IRQHandler(irq, handle_touch)
-        else:
-            Poller(handle_touch)
+        if setup:
+            self.setup(reset=reset, **kwargs)
+        elif reset:
+            self.reset()
 
-        self.setup()
+    def update_touch_state(self):
+        """Update touch state, calls touched()"""
+        t0 = self._touched
+        t1 = self._touched = self.touched()
+        ch = t0 ^ t1
+        if ch: self._handle_touch(t1, ch)
 
     def _handle_touch(self, touched, changed):
         """Invokes touch handlers if touch status changed.
@@ -230,21 +240,26 @@ class MPR121:
         """
         self._bus.write_byte(ECR, (cl << 6) | (prox << 4) | touch)
 
-    def touched(self):
+    def touched(self, raise_on_failure=1):
         """Get touch status bits to the device.
 
         Returns:
             int: first 12 bits contain touch status, 1=touched
 
+        Args:
+            raise_on_failure (bool): raise if failure bits are set
+
         Raises:
-            Exception: on overcurrent
+            Exception: on overcurrent and out of range
         """
         word = self._bus.read_word(ETS)
-        overcurrent = (word & (1 << 15)) > 0
-        if overcurrent:
-            raise Exception('overcurrent')
-        self.out_of_range()
-        return word & 0x0fff
+        if raise_on_failure:
+            overcurrent = (word & (1 << 15)) > 0
+            if overcurrent:
+                raise Exception('overcurrent')
+            if self.out_of_range():
+                raise Exception('out of range')
+        return word & 0x1fff
 
     def electrode_data(self):
         """Get raw eletrode measurement data.
@@ -336,20 +351,21 @@ class MPR121:
         hb = (cdt << 5) | (sfi << 3) | esi
         self._bus.write_word(AFE1, (hb << 8) | lb)
 
-    def charge(self, channel, current=0, time=0):
+    def charge(self, channel, cdc=0, cdt=0):
         """Configure change current and time per channel.
 
         These values are determined automatically when ``auto_config()`` is activated.
 
         Args:
             channel (int): channel to configure 0-11
-            current (int): charge current
+            cdc (int): charge-discharge-current 0-63 (uA)
+            cdt (int): charge-discharge-time 0-7 (0.5*2**(cdt-1) us)
         """
-        self._bus.write_byte(CDC + channel, current)
+        self._bus.write_byte(CDC + channel, cdc)
         reg = CDT + channel // 2
         s = 4 * (channel % 2)
         self._bus.write_byte(
-            reg, (self._bus.read_byte(reg) & ~(0xf << s)) | (time << s))
+            reg, (self._bus.read_byte(reg) & ~(0xf << s)) | (cdt << s))
 
     def auto_config(self,
                     ace=1,
@@ -382,32 +398,34 @@ class MPR121:
             arfie (bool): enable IRQ on auto reconfig failure
             oorie (bool): enable IRQ on out of range event
         """
-        lb = (afes & 0b11 << 6) | (retry & 0b11 << 4) | (bva & 0b11 << 2) | (
-            are & 0b1 << 1) | ace & 0b1
-        hb = (scts & 0b1 << 7) | (oorie & 0b1 << 2) | (
-            arfie & 0b1 << 1) | acfie & 0b1
+        lb = (afes << 6) | (retry << 4) | (bva << 2) | (are << 1) | (ace)
+        hb = (scts << 7) | (oorie << 2) | (arfie << 1) | (acfie)
         self._bus.write_word(ACNF_C0, (hb << 8) + lb)
         self._bus.write_byte(ACNF_USL, usl)
         self._bus.write_byte(ACNF_LSL, lsl)
         self._bus.write_byte(ACNF_TL, tl)
 
-    def out_of_range(self):
+    def out_of_range(self, raise_on_failure=1):
         """get out of range status.
 
         Returns:
             int: first 12 bits contain oor status.
 
+        Args:
+            raise_on_failure (bool): raise if failure bits are set
+
         Raises:
             Exception: if auto (re)config has failed
         """
         word = self._bus.read_word(OOR)
-        auto_config_failed = (word & (1 << 15)) > 0
-        if auto_config_failed:
-            raise Exception('auto config failed')
-        auto_reconfig_failed = (word & (1 << 14)) > 0
-        if auto_reconfig_failed:
-            raise Exception('auto reconfig failed')
-        return word & 0x0fff
+        if raise_on_failure:
+            auto_config_failed = (word & (1 << 15)) > 0
+            if auto_config_failed:
+                raise Exception('auto config failed')
+            auto_reconfig_failed = (word & (1 << 14)) > 0
+            if auto_reconfig_failed:
+                raise Exception('auto reconfig failed')
+        return word & 0x1fff
 
     def gpio_setup(self, channel, output, mode=0, enable=1):
         """Setup GPIO configuration.
@@ -484,6 +502,8 @@ class MPR121:
         for q in range(loop):
             cols = 4
             fs = '{}0x{:02x} = 0x{:02x} b{:08b} {:3d}\033[0m    ' * cols
+            if up and q:
+                sys.stdout.write('\033[F' * ((regs * 32) + NCH + 1))
             if regs:
                 data = []
                 for i in range(cols):
@@ -499,18 +519,18 @@ class MPR121:
             print(' E:  raw base diff (touched) [GPIO]' + ' ' * 73 +
                   '  cdc     cdt oor')
             n = 80
-            ts = self.touched()
+            ts = self.touched(raise_on_failure=0)
+            oo = self.out_of_range(raise_on_failure=0)
             gp = self.gpio_status()
             ed = self.electrode_data()
             bl = self.baseline()
-            oo = self.out_of_range()
             for i in range(NCH):
                 e = int(n * ed[i] / 0x3ff)
                 b = int(n * bl[i] / 0x3ff)
                 bar = ['='] * e + ['-'] * (n - e)
                 bar[b] = '\033[0m|\033[34m'
-                nt = max(0, b - int(n * tth[i] / 255))
-                nr = max(0, b - int(n * rth[i] / 255))
+                nt = max(0, int(n * ((bl[i] - tth[i]) / 0x3ff)))
+                nr = max(0, int(n * ((bl[i] - rth[i]) / 0x3ff)))
                 bar[nt] = '\033[33m' + bar[nt]
                 bar[nr] = '\033[32m' + bar[nr]
                 t = '1' if (ts & (1 << i)) else '0'
@@ -525,10 +545,14 @@ class MPR121:
                     '{:2d}: {:4d} {:4d} {:4d} ({}) [{}] \033[31m{}\033[0m {:3d}uA {:5.1f}us  {}   '.
                     format(i, ed[i], bl[i], ed[i] - bl[i], t, g, ''.join(bar),
                            cdc, (0.5 * 2**(cdt - 1)), o))
-            if up:  # move cursor up
-                sys.stdout.write('\033[F' * ((regs * 32) + NCH + 1))
 
-    def setup(self, reset=1, channels=12, prox=0, threshold=50, debounce=2):
+    def setup(self,
+              reset=1,
+              channels=12,
+              prox=0,
+              threshold=50,
+              debounce=2,
+              auto_config=1):
         """Configure the device with sane defaults.
 
         Args:
@@ -536,18 +560,20 @@ class MPR121:
             channels (int): number of channels to activate 0-12
             threshold (int): touch threshold 0-255
             debounce (int): debounce count 0-7
+            auto_config (bool): enable charge auto config
         """
         if reset:
             self.reset()
         self.configure(prox=0, touch=0)
-        self.filter(cdc=16, cdt=1, ffi=1, sfi=1, esi=0)
-        self.auto_config()
+        self.filter(cdc=30, cdt=1, ffi=1, sfi=1, esi=0)
+        if auto_config:
+            self.auto_config()
         self.threshold(touch=threshold)
-        self.threshold(channel=12, touch=10)
+        self.threshold(channel=12, touch=threshold >> 2)
         self.debounce(debounce)
         for i in range(2):
-            self.baseline(rft=i, mhd=5, nhd=1, ncl=3, fdl=10)
-            self.baseline(rft=i, mhd=1, nhd=1, ncl=3, fdl=10, prox=1)
+            self.baseline(rft=i, mhd=5, nhd=1, ncl=3, fdl=20)
+            self.baseline(rft=i, mhd=1, nhd=1, ncl=3, fdl=20, prox=1)
         self.configure(prox=prox, touch=channels)
 
 
@@ -555,5 +581,77 @@ if __name__ == '__main__': main()
 
 
 def main():
-    m = MPR121()
-    m.dump(0, 1, 1000000)
+    from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+
+    parser = ArgumentParser(
+        description='MPR121 register and status dump',
+        formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        '-a', '--address', type=int, default=0x5a, help='device address')
+    parser.add_argument(
+        '-p', '--prox', type=int, default=0, help='enable proximity')
+    parser.add_argument(
+        '-T', '--threshold', type=int, default=50, help='touch threshold')
+    parser.add_argument(
+        '-c', '--channels', type=int, default=12, help='# of channels')
+    parser.add_argument(
+        '-q',
+        '--irq',
+        type=int,
+        default=0,
+        help='BCM# of IRQ pin 0=use polling')
+    parser.add_argument('-b', '--bus', type=int, default=1, help='I2C bus')
+    parser.add_argument(
+        '-r', '--regs', action='store_true', help='dump registers')
+    parser.add_argument(
+        '-t',
+        '--touch',
+        action='store_true',
+        help='no dump, log touche events')
+    parser.add_argument(
+        '-A',
+        '--no-auto',
+        action='store_false',
+        help='disable charge auto config')
+    parser.add_argument(
+        '-R', '--no-reset', action='store_false', help='no initial reset')
+    parser.add_argument(
+        '-S', '--no-setup', action='store_false', help='no initial setup')
+    parser.add_argument(
+        '-B', '--scan-bus', action='store_true', help='scan bus for devices')
+    args = parser.parse_args()
+
+    from time import sleep
+    from functools import partial
+
+    if args.scan_bus:
+        from .bus import Bus
+        bus = Bus(args.bus)
+        print('used addresses')
+        for a in range(256):
+            try:
+                bus.read_byte(a, 0)
+                print('0x{:02x} '.format(a))
+            except:
+                pass
+        exit()
+
+    m = MPR121(
+        bus=args.bus,
+        addr=args.address,
+        irq=args.irq,
+        handlers=args.touch,
+        setup=args.no_setup,
+        reset=args.no_reset,
+        auto_config=args.no_auto,
+        channels=args.channels,
+        prox=args.prox,
+        threshold=args.threshold)
+
+    if args.touch:
+        print('touch events')
+        for i in range(NCH):
+            m.on_touch(i, lambda s, c: print(c, s))
+    else:
+        fork(partial(m.dump, regs=args.regs, loop=1000000))
+    on_change(__file__, exit, forking=0)
