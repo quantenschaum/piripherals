@@ -1,0 +1,16 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+name = "pypi"
+verify_ssl = true
+
+
+[packages]
+
+"rpi_ws281x" = "*"
+"rpi.gpio" = "*"
+"smbus2" = "*"
+"python-mpd2" = "*"
+
+
+[dev-packages]

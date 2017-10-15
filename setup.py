@@ -17,7 +17,7 @@ setup(
     author_email=__author_email__,
     url=__url__,
     packages=find_packages(),
-    python_requires='>=3',
+    python_requires='>=3.5',
     # install_requires=['rpi_ws281x'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
