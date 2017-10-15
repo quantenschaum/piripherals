@@ -1,3 +1,8 @@
+![pypi](https://img.shields.io/pypi/v/piripherals.svg)
+![license](https://img.shields.io/pypi/l/piripherals.svg)
+[![Build Status](https://travis-ci.org/quantenschaum/piripherals.svg?branch=master)](https://travis-ci.org/quantenschaum/piripherals)
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/quantenschaum)
+
 # piripherals
 
 a collection of classes to interact with peripherals for the RaspberryPi
