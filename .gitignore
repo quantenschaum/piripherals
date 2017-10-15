@@ -1,7 +1,8 @@
 /*
 *.pyc
-__pychache__
+__pycache__
 !*.py
 !/piripherals
-!/doc
-/doc/_build
+!/docs
+/docs/_build
+!/tests/

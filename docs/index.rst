@@ -1,11 +1,12 @@
 piripherals' documentation
 ===========================
 
-.. warning::
+.. note::
 
   This is a Python 3 library https://pythonclock.org/
 
-  Mayba this can be pasteurized http://python-future.org/automatic_conversion.html#pasteurize-py3-to-py2-3
+  Maybe this can be pasteurized http://python-future.org/automatic_conversion.html#pasteurize-py3-to-py2-3
+  I will do this later, maybe.
 
 .. toctree::
    :maxdepth: 4

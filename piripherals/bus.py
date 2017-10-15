@@ -1,5 +1,4 @@
-"""Wrapper classes to abstract bus access.
-"""
+"""Wrapper classes to abstract bus access."""
 
 from functools import partial
 

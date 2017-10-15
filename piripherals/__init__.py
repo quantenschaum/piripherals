@@ -1,5 +1,4 @@
-"""a collection of classes to interact with peripherals for the RaspberryPi
-"""
+"""a collection of classes to interact with peripherals for the RaspberryPi"""
 
 from .__version__ import *
 

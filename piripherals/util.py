@@ -46,8 +46,10 @@ def on_change(file, callback, delay=1, forking=1):
                 callback()
             sleep(delay)
 
-    if forking: fork(check)
-    else: check()
+    if forking:
+        fork(check)
+    else:
+        check()
 
 
 class IRQHandler:

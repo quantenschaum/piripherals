@@ -5,4 +5,4 @@ __version__ = '0.1b4'
 __author__ = 'quantenschaum'
 __author_email__ = 'software@louisenhof2.de'
 __license__ = 'GPLv3'
-__copyright__ = '2017, Adam Lucke'
+__copyright__ = '2017, ' + __author__

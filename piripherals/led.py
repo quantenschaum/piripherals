@@ -11,9 +11,12 @@ def wheel(p):
     a = 3 * (p % (1 / 3))
     c1, c2, c3 = [int(255 * x) for x in (1 - a, a, 0)]
     b = int(3 * p)
-    if b == 0: return c1, c2, c3
-    elif b == 1: return c3, c1, c2
-    else: return c2, c3, c1
+    if b == 0:
+        return c1, c2, c3
+    elif b == 1:
+        return c3, c1, c2
+    else:
+        return c2, c3, c1
 
 
 class NeoPixels(object):
@@ -36,9 +39,12 @@ class NeoPixels(object):
     def color(self, led=None, r=0, g=-1, b=-1, v=-1):
         self._running = False
         self._cond.acquire()
-        if led and led < 0: led += self.strip.numPixels()
-        if g < 0: g = r
-        if b < 0: b = g
+        if led and led < 0:
+            led += self.strip.numPixels()
+        if g < 0:
+            g = r
+        if b < 0:
+            b = g
         if v >= 0:
             self.strip.setBrightness(int(255 * v))
         rgb = [int(255 * v) for v in (r, g, b)]
@@ -65,7 +71,8 @@ class NeoPixels(object):
                     self._cond.notify()
                     self._cond.release()
                     raise
-                if self._atexit: self._atexit()
+                if self._atexit:
+                    self._atexit()
 
         fork(start_stop_loop)
 
@@ -79,7 +86,8 @@ class NeoPixels(object):
             self._running = True
             while self._running:
                 t = monotonic() - t0
-                if self._timeout and t > self._timeout: break
+                if self._timeout and t > self._timeout:
+                    break
                 tau = (t * self._freq) % 1
                 self._func(t, tau)
                 if self._fade:
@@ -112,20 +120,24 @@ class NeoPixels(object):
             raise Exception('dead lock: wait=1 and timeout=0')
 
         self._cond.notify()
-        if wait: self._cond.wait()
+        if wait:
+            self._cond.wait()
         self._cond.release()
 
     def breathe(self, n=1, fade=0, color=None, **kwargs):
         from math import exp, cos, pi
         a, b = exp(-n), 1 / (exp(n) - exp(-n))
         if fade:
-            h = lambda t: 1 - t / fade
+            def h(t): return 1 - t / fade
             kwargs['timeout'] = fade
         else:
-            h = lambda t: 1
-        g = lambda t, s: b * (exp(-n * cos(2 * pi * s)) - a) * h(t)
-        f = lambda t, s: self.strip.setBrightness(int(255 * g(t, s)))
-        if color: self.color()
+            def h(t): return 1
+
+        def g(t, s): return b * (exp(-n * cos(2 * pi * s)) - a) * h(t)
+
+        def f(t, s): return self.strip.setBrightness(int(255 * g(t, s)))
+        if color:
+            self.color()
         self.animate(f, **kwargs)
 
     def rainbow(self, **kwargs):
@@ -137,11 +149,14 @@ class NeoPixels(object):
         self.animate(f, **kwargs)
 
     def blink(self, pattern='10', **kwargs):
-        if ' ' in pattern: pattern = pattern.split()
+        if ' ' in pattern:
+            pattern = pattern.split()
         pattern = [max(0, min(1, float(s))) for s in pattern]
         l = len(pattern)
-        g = lambda s: pattern[int(s * l)]
-        f = lambda t, s: self.strip.setBrightness(int(255 * g(s)))
+
+        def g(s): return pattern[int(s * l)]
+
+        def f(t, s): return self.strip.setBrightness(int(255 * g(s)))
         self.animate(f, **kwargs)
 
     def sequence(self,
@@ -150,7 +165,8 @@ class NeoPixels(object):
                  **kwargs):
         colors = [tuple(map(lambda x: int(255 * float(x)), c)) for c in colors]
         l = len(colors)
-        f = lambda t, s: self.strip.setPixelColorRGB(0, *colors[int(s * l)])
+
+        def f(t, s): return self.strip.setPixelColorRGB(0, *colors[int(s * l)])
         self.animate(f, **kwargs)
 
     def spin(self, **kwargs):
@@ -162,7 +178,7 @@ class NeoPixels(object):
 
         n = self.strip.numPixels()
 
-        color = lambda r, g, b: (r << 16) | (g << 8) | b
+        def color(r, g, b): return (r << 16) | (g << 8) | b
 
         def f(t, s):
             now = datetime.now()
@@ -213,7 +229,8 @@ class NeoPixels(object):
         self.animate(f, **kwargs)
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
 
 
 def main():

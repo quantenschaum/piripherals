@@ -17,19 +17,24 @@ class MPD(object):
     def __getattr__(self, name):
         import mpd
         a = self._mpd.__getattribute__(name)
-        if not callable(a): return a
+        if not callable(a):
+            return a
 
         def b(*args, **kwargs):
             try:
-                if verbosity > 1: debug(['try', name, args, kwargs])
+                if verbosity > 1:
+                    debug(['try', name, args, kwargs])
                 return a(*args, **kwargs)
             except (mpd.MPDConnectionError, ConnectionError) as e:
                 cargs = self.__dict__['_connect_args']
-                if not cargs: raise
-                if verbosity > 1: exception(e)
+                if not cargs:
+                    raise
+                if verbosity > 1:
+                    exception(e)
                 cargs, ckwargs = cargs
                 self.connect(*cargs, **ckwargs)
-                if verbosity > 1: debug(['retry', name, args, kwargs])
+                if verbosity > 1:
+                    debug(['retry', name, args, kwargs])
                 return a(*args, **kwargs)
 
         return b
@@ -86,7 +91,8 @@ class MPD(object):
 
     def has_playlist(self, name):
         for i in self.listplaylists():
-            if name == i['playlist']: return True
+            if name == i['playlist']:
+                return True
         return False
 
     def load_playlist(self, name):
