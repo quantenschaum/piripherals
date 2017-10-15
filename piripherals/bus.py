@@ -11,10 +11,7 @@ class Bus:
         try:
             from smbus import SMBus
         except:
-            try:
-                from smbus2 import SMBus
-            except Exception as x:
-                return
+            from smbus2 import SMBus
 
         bus = SMBus(bus)
         self.read_byte = bus.read_byte_data

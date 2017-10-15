@@ -1,8 +1,5 @@
 """an interface to NeoPixel LEDs based on rpi_ws281x"""
 
-# http://python-future.org/compatible_idioms.html
-from __future__ import print_function, division
-
 __all__ = ['NeoPixels']
 
 from time import sleep

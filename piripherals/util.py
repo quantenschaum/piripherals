@@ -1,27 +1,18 @@
 """utility functions and classes"""
 
-# http://python-future.org/compatible_idioms.html
-from __future__ import print_function, division
-
-__all__ = [
-    'DaemonThread', 'fork', 'not_raising', 'IRQHandler', 'Poller', 'on_change'
-]
+__all__ = ['fork', 'not_raising', 'IRQHandler', 'Poller', 'on_change', 'noop']
 
 from time import sleep
-from threading import Thread
-
-
-class DaemonThread(Thread):
-    """Thread with daemon=True."""
-
-    def __init__(self, *args, **kwargs):
-        super(DaemonThread, self).__init__(*args, **kwargs)
-        self.daemon = True
+from threading import Thread, Event
+from functools import partial
 
 
 def fork(func):
     """run func asynchronously in a DaemonThread"""
-    DaemonThread(target=func).start()
+    Thread(target=func, daemon=True).start()
+
+
+noop = lambda *x: None
 
 
 def not_raising(func):
@@ -121,6 +112,3 @@ class Poller:
                 sleep(delay)
 
         fork(loop)
-
-
-noop = lambda *x: None
