@@ -3,7 +3,10 @@
 This is thought to be a replacement of the incomplete and undocumented
 Adafruit.MPR121_ library.
 
-To fully understand this device, please read the datasheet_.
+.. note::
+
+    To fully understand this device, please read the datasheet_.
+
 
 Wiring the MPR121 to the RaspberryPi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,7 +75,8 @@ Attach the MPR121 to the Pi as described above and use it like::
 Simply instanciante it and assign touch handlers. For fine tuning and to userthe
 GPIO functionality, see the doc below.
 
-.. note::
+.. tip::
+
     Use the ``mpr121-dump`` script to examine the MPR121's response and to tune
     the settings.
 
@@ -150,7 +154,8 @@ class MPR121:
             t0 = self._touched
             t1 = self._touched = self.touched()
             ch = t0 ^ t1
-            if ch: self._handle_touch(t1, ch)
+            if ch:
+                self._handle_touch(t1, ch)
 
         if irq:
             IRQHandler(irq, handle_touch)
@@ -284,8 +289,10 @@ class MPR121:
             return [b << 2 for b in self._bus.read_block(EBL, NCH)]
         else:
             reg = (MHDX if prox else MHD) + 4 * rft
-            if rft > 1: self._bus.write_block(reg, [nhd, ncl, fdl])
-            else: self._bus.write_block(reg, [mhd, nhd, ncl, fdl])
+            if rft > 1:
+                self._bus.write_block(reg, [nhd, ncl, fdl])
+            else:
+                self._bus.write_block(reg, [mhd, nhd, ncl, fdl])
 
     def threshold(self, touch, release=-1, channel=-1):
         """Set touch and release thresholds.
@@ -317,7 +324,8 @@ class MPR121:
             touch (int): for touch 0-7
             release (int): for release 0-7, if ommited release=touch
         """
-        if release < 0: release = touch
+        if release < 0:
+            release = touch
         self._bus.write_byte(DEB, (release << 4) | touch)
 
     def filter(self, cdc=16, cdt=1, ffi=0, sfi=0, esi=4):
@@ -429,13 +437,14 @@ class MPR121:
             enable (bool): enable/disbale GPIO functionality
         """
         assert 4 <= channel <= 11
-        if mode == 1: mode = 0
+        if mode == 1:
+            mode = 0
         channel -= 4
 
         def set_bit(addr, bit, value):
             print('0x{:02x}={:08b}'.format(addr, (
                 self._bus.read_byte(addr) & ~(1 << bit)) |
-                                           ((1 if value else 0) << bit)))
+                ((1 if value else 0) << bit)))
             self._bus.write_byte(addr,
                                  (self._bus.read_byte(addr) & ~(1 << bit)) |
                                  ((1 if value else 0) << bit))
@@ -551,7 +560,8 @@ class MPR121:
         self.configure(prox=prox, touch=channels)
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    main()
 
 
 def main():

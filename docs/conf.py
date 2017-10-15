@@ -16,9 +16,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, u'/home/...')
+import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # -- General configuration ------------------------------------------------
 
@@ -27,7 +27,7 @@
 needs_sphinx = '1.6'
 
 #from recommonmark.transform import AutoStructify
-#def setup(app):
+# def setup(app):
 #    app.add_config_value('recommonmark_config', {
 #        'url_resolver': lambda url: github_doc_root + url,
 #        'auto_toc_tree_section': 'Contents',
@@ -66,8 +66,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'piripherals'
-copyright = u'2017, quantenschaum'
 author = u'quantenschaum'
+copyright = u'2017, quantenschaum'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

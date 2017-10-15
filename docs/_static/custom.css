@@ -13,3 +13,7 @@
 .data>dt, .attribute>dt {
   background: #eee;
 }
+
+div.note, div.important {
+  background: #FFF59C;
+}
