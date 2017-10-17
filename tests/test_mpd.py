@@ -47,7 +47,7 @@ def test_state(mpd):
 
 def test_toggle_play(mpd):
     mpd.stop()
-    mpd.add('http://foo')
+    mpd.add('http://89.16.185.174:8003/stream')
     assert mpd.state() == 'stop'
     mpd.toggle_play()
     assert mpd.state() == 'play'
