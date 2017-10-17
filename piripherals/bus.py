@@ -9,8 +9,28 @@ class Bus:
     """Abstraction for a data bus, i.e. I2C.
 
     Args:
-        bus: something with read and write methods. If not given, try to
-            use /dev/i2c-1
+        bus: something with read and write methods.
+
+    The ``bus`` need to have at least the following methods
+
+    - ``read_byte_data(addr,reg)`` -> ``byte``
+    - ``write_byte_data(addr,reg,byte)``
+
+    and additionally
+
+    - ``read_word_data(addr,reg)`` -> ``word``
+    - ``write_word_data(addr,reg,work)``
+    - ``read_i2c_block_data(addr,reg,size)`` -> ``[byte,...]``
+    - ``write_i2c_block_data(addr,reg,[byte,...])``
+
+    If these are not present, it will read/write words and blocks using
+    ``read_byte_data`` and ``write_byte_data``.
+
+    The bus usually is an ``smbus.SMBus`` or ``smbus2.SMBus`` instance.
+
+    - https://pypi.python.org/pypi/smbus2/
+    - https://pypi.python.org/pypi/smbus-cffi/
+    - https://packages.debian.org/de/stretch/python-smbus
     """
 
     def __init__(self, bus):
