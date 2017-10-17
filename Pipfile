@@ -7,10 +7,12 @@ verify_ssl = true
 
 [packages]
 
-"rpi_ws281x" = "*"
+"rpi-ws281x" = "*"
 "rpi.gpio" = "*"
 "smbus2" = "*"
 "python-mpd2" = "*"
+pytest = "*"
+pytest-cov = "*"
 
 
 [dev-packages]

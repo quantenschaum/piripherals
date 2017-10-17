@@ -1,5 +1,5 @@
 from os.path import join, dirname
-from setuptools import setup, find_packages
+from setuptools import setup  # , find_packages
 
 
 def read(f): return open(join(dirname(__file__), f)).read()
@@ -16,7 +16,7 @@ setup(
     author=__author__,
     author_email=__author_email__,
     url=__url__,
-    packages=find_packages(),
+    packages=['piripherals'],  # find_packages(),
     python_requires='>=3.5',
     # install_requires=['rpi_ws281x'],
     setup_requires=['pytest-runner'],

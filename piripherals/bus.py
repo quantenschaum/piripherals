@@ -2,23 +2,37 @@
 
 from functools import partial
 
+__all__ = ['Bus', 'Device']
+
 
 class Bus:
-    """Abstraction for a data bus, i.e. I2C."""
+    """Abstraction for a data bus, i.e. I2C.
 
-    def __init__(self, bus=1):
-        try:
-            from smbus import SMBus
-        except:
-            from smbus2 import SMBus
+    Args:
+        bus: something with read and write methods. If not given, try to
+            use /dev/i2c-1
+    """
 
-        bus = SMBus(bus)
+    def __init__(self, bus):
         self.read_byte = bus.read_byte_data
-        self.read_word = bus.read_word_data
-        self.read_block = bus.read_i2c_block_data
+        try:
+            self.read_word = bus.read_word_data
+        except:
+            pass
+        try:
+            self.read_block = bus.read_i2c_block_data
+        except:
+            pass
+
         self.write_byte = bus.write_byte_data
-        self.write_word = bus.write_word_data
-        self.write_block = bus.write_i2c_block_data
+        try:
+            self.write_word = bus.write_word_data
+        except:
+            pass
+        try:
+            self.write_block = bus.write_i2c_block_data
+        except:
+            pass
 
     def read_byte(self, addr, reg):
         """read a byte.
@@ -30,7 +44,7 @@ class Bus:
         Returns:
             int: the byte, that was read
         """
-        return 0
+        raise NotImplementedException()
 
     def read_word(self, addr, reg):
         """read a word (2 bytes).
@@ -43,7 +57,7 @@ class Bus:
         Returns:
             int: the word, that was read
         """
-        return 0
+        return self.read_byte(addr, reg) | self.read_byte(addr, reg + 1) << 8
 
     def read_block(self, addr, reg, n):
         """read a block of bytes.
@@ -56,7 +70,10 @@ class Bus:
         Returns:
             list of int: bytes, that were read
         """
-        return [0] * n
+        blocks = []
+        for i in range(n):
+            blocks.append(self.read_byte(addr, reg + i))
+        return blocks
 
     def write_byte(self, addr, reg, byte):
         """write a byte.
@@ -66,7 +83,7 @@ class Bus:
             reg (int): register to write to
             byte (int): byte to be written
         """
-        return
+        raise NotImplementedException()
 
     def write_word(self, addr, reg, word):
         """write a word (2 bytes).
@@ -77,7 +94,8 @@ class Bus:
                 high byte is at reg+1
             word (int): word to be written
         """
-        return
+        self.write_byte(addr, reg, word & 0xff)
+        self.write_byte(addr, reg + 1, (word >> 8) & 0xff)
 
     def write_block(self, addr, reg, block):
         """write a block of bytes.
@@ -87,7 +105,9 @@ class Bus:
             reg (int): base register, first byte of the block
             block (list of int): bytes to be written, len(block)<=32
         """
-        return
+        for b in block:
+            self.write_byte(addr, reg, b)
+            reg += 1
 
     def device(self, addr):
         """Get a Device.
