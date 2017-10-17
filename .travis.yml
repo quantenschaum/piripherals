@@ -2,7 +2,8 @@ language: python
 python:
   - 3.5
   - 3.6
-install: 
-  - pip install .
+install:
+  - pip install pytest
+  - pip install .[MPD]
 script:
   - pytest
