@@ -1,15 +1,20 @@
-class MPD(object):
-    """Wrapper for MPDClient that adds
 
-    - automatic reconnect on connection loss
-      see https://github.com/Mic92/python-mpd2/issues/64
+class MPD(object):
+    """Wrapper for `MPDClient`_ that adds
+
+    - automatic reconnect on connection loss, see `issue64`_.
     - custom methods
     - volume limit
-    - supports all methods of ``MPDClient``
+
+    It supports all methods of ``MPDClient``.
 
     Args:
         maxvol (int): volume limit
-        *: args for ``MPDClient``
+        *args: args for ``MPDClient``
+        **kwargs: kwargs for ``MPDClient``
+
+    .. _MPDClient: https://github.com/Mic92/python-mpd2
+    .. _issue64: https://github.com/Mic92/python-mpd2/issues/64
     """
 
     def __init__(self, maxvol=100, *args, **kwargs):
@@ -46,6 +51,8 @@ class MPD(object):
 
         disconnects if already connected, host and port are stored,
         will reconnect automatically if connection is lost
+
+        All parameters are passed to ``MPDClient.connect()``.
 
         Args:
                 host (str): hostname/ip/socket

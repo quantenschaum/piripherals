@@ -53,16 +53,24 @@ def on_change(file, callback, delay=1, forking=1):
 
 
 class IRQHandler:
-    """Abstraction of IRQ handler.
+    """Abstraction of an IRQ handler.
 
-    An edge on the pin sets a flag.  The callback is invoked on a separate
+    An edge on the IRQ pin sets a flag.  The callback is invoked on a separate
     thread when the flag was set.  The flag is reset when the pin is high again.
-    The callback may be invoked repeatedly if the pin does not reset.
+    The callback may be invoked repeatedly if the pin does not reset. So you have
+    to reset the IRQ inside the callback, such that when the callback returns,
+    the IRQ line is high again.
+
+    This uses RPi.GPIO_ internally.
+
+    .. _RPi.GPIO: https://pypi.python.org/pypi/RPi.GPIO
+    .. _BCM: https://pinout.xyz/
 
     Args:
-        pin (int): BCM# of pin attached to IRQ line.
+        pin (int): BCM_ pin number attached to IRQ line.
         callback: function invoked on IRQ.
-        edge (int): fire interrupt on falling=0 or rising=1 edge.
+        edge (int): fire interrupt on falling=0 or rising=1 edge. 1 inverts
+            the logic, so IRQ is considered reset when low.
         pullup (int): activate internal pullup
             1=pullup, 0=nothing, -1=pulldown.
     """

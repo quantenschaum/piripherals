@@ -1,18 +1,54 @@
 piripherals' documentation
-===========================
+==========================
+
+Version |release|
 
 .. note::
 
-  This is a Python 3 library https://pythonclock.org/
+  This is a **Python 3 only** library!  I will make this Python 2 compatible later, maybe.
 
-  Maybe this can be pasteurized http://python-future.org/automatic_conversion.html#pasteurize-py3-to-py2-3
-  I will do this later, maybe.
+.. attention::
+
+  This is still in the beginning and work in progress! Many things will change!
+
+.. note::
+
+  This library is intended to be used on the RaspberryPi primarily, but it also works on other
+  platforms. The things, that are related to the hardware of the Pi, will not work on other
+  machines, of course.
+
+Installation
+------------
+
+Install piripherals from `PyPI`_ with pip::
+
+  pip install piripherals
+
+Dependencies
+------------
+
+This package has some `soft` dependencies. If you need them, depends on which
+classes you actually use.
+
+- ``rpi_ws281x`` https://pypi.python.org/pypi/rpi_ws281x
+- ``RPi.GPIO`` https://pypi.python.org/pypi/RPi.GPIO
+- ``smbus2`` https://pypi.python.org/pypi/smbus2, but other smbus implementations like Raspbians ``python-smbus`` may work, too
+- ``python-mpd2`` https://pypi.python.org/pypi/python-mpd2
+
+.. _GitHub: https://github.com/quantenschaum/piripherals/
+.. _PyPI: https://pypi.python.org/pypi/piripherals
+
+Modules
+=======
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
+   :maxdepth: 1
 
-   piripherals
+   piripherals.bus
+   piripherals.led
+   piripherals.mpd
+   piripherals.mpr121
+   piripherals.util
 
 
 Indices and tables

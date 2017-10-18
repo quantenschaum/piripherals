@@ -1,4 +1,7 @@
-"""an interface to NeoPixel LEDs based on rpi_ws281x"""
+"""an interface to NeoPixel LEDs based on `rpi_ws281x`_.
+
+.. _rpi_ws281x: https://pypi.python.org/pypi/rpi_ws281x
+"""
 
 __all__ = ['NeoPixels']
 

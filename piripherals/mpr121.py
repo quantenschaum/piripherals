@@ -132,10 +132,11 @@ class MPR121:
     Args:
         bus (int): I2C bus, 1 = /dev/i2c-1
         addr (int): I2C address of the device
-        irq (int): GPIO BCM pin # that is connect to interrupt line,
-            0=disbale IRQ, use polling
-        handlers (bool): enable IRQ handler/polling
-        setup (bool): configure with defaults or just reset
+        irq (int): BCM_ pin # that is connect to interrupt line,
+            0 disables IRQ, uses polling instead
+        handlers (bool): enable IRQ handler/polling, if disabled ``update_touch_state()``
+            has to be called explicitly
+        setup (bool): configure with (sane) defaults 
         reset (bool): reset on initialization
         **kwargs: arguments to setup()
     """
