@@ -1,8 +1,9 @@
 language: python
 python:
   - 3.5
-  - 3.6
+  - latest
 install:
-  - pip install .[MPD]
+  - pip install .[MPD] pytest pytest-cov
 script:
-  - python setup.py test
+  - pytest --cov piripherals
+  
