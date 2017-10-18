@@ -1,7 +1,7 @@
 language: python
 python:
   - 3.5
-  - latest
+  - 3.6
 install:
   - pip install .[MPD] pytest pytest-cov
 script:
