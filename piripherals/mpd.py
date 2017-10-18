@@ -1,3 +1,10 @@
+try:
+    from mpd import MPDClient
+    from mpd import ConnectionError as MPDConnectionError
+    from mpd import CommandError as MPDCommandError
+except:
+    pass
+
 
 class MPD(object):
     """Wrapper for `MPDClient`_ that adds
@@ -18,14 +25,12 @@ class MPD(object):
     """
 
     def __init__(self, maxvol=100, *args, **kwargs):
-        from mpd import MPDClient
         self.__dict__['maxvol'] = maxvol
         self.__dict__['_mpd'] = MPDClient(*args, **kwargs)
         self.__dict__['_connect_args'] = None
         self.timeout = 5
 
     def __getattr__(self, name):
-        import mpd
         a = self._mpd.__getattribute__(name)
         if not callable(a):
             return a
@@ -33,7 +38,7 @@ class MPD(object):
         def b(*args, **kwargs):
             try:
                 return a(*args, **kwargs)
-            except (mpd.ConnectionError, ConnectionError) as e:
+            except (MPDConnectionError, ConnectionError) as e:
                 cargs = self.__dict__['_connect_args']
                 if not cargs:
                     raise
@@ -64,12 +69,11 @@ class MPD(object):
 
     def disconnect(self):
         """disconnect, disables auto reconnect"""
-        import mpd
         try:
             self.__dict__['_connect_args'] = None
             self._mpd.close()
             self._mpd.disconnect()
-        except (mpd.ConnectionError, ConnectionError) as e:
+        except (MPDConnectionError, ConnectionError) as e:
             pass
         finally:
             self._mpd._reset()
@@ -133,10 +137,9 @@ class MPD(object):
         Args:
             name (str): name of the playlist to delete
         """
-        import mpd
         try:
             self.rm(name)
-        except mpd.CommandError:
+        except MPDCommandError:
             pass
 
     def has_playlist(self, name):
