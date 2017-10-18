@@ -9,10 +9,8 @@ verify_ssl = true
 
 "rpi-ws281x" = "*"
 "rpi.gpio" = "*"
-"smbus2" = "*"
 "python-mpd2" = "*"
-pytest = "*"
-pytest-cov = "*"
+"smbus2" = "*"
 
 
 [dev-packages]

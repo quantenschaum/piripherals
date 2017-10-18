@@ -1,10 +1,17 @@
 """utility functions and classes"""
 
-__all__ = ['fork', 'not_raising', 'IRQHandler', 'Poller', 'on_change', 'noop']
-
 from time import sleep
 from threading import Thread, Event
 from functools import partial
+from os.path import getmtime
+import traceback
+import atexit
+try:
+    import RPi.GPIO as GPIO
+except:
+    pass
+
+__all__ = ['fork', 'not_raising', 'IRQHandler', 'Poller', 'on_change', 'noop']
 
 
 def fork(func):
@@ -25,7 +32,6 @@ def not_raising(func):
         wrapped function, that does not raise Exceptions,
         Exceptions are printed to console
     """
-    import traceback
 
     def logging_func(*args, **kwargs):
         try:
@@ -37,7 +43,6 @@ def not_raising(func):
 
 
 def on_change(file, callback, delay=1, forking=1):
-    from os.path import getmtime
     t = getmtime(file)
 
     def check():
@@ -67,7 +72,8 @@ class IRQHandler:
     .. _BCM: https://pinout.xyz/
 
     Args:
-        pin (int): BCM_ pin number attached to IRQ line.
+        pin (int): BCM_ pin number attached to IRQ line. 0 disables use of GPIO
+            pins, call ``interrupt`` explicitly
         callback: function invoked on IRQ.
         edge (int): fire interrupt on falling=0 or rising=1 edge. 1 inverts
             the logic, so IRQ is considered reset when low.
@@ -76,29 +82,37 @@ class IRQHandler:
     """
 
     def __init__(self, pin, callback, edge=0, pullup=1):
-        import RPi.GPIO as GPIO
-        GPIO.setmode(GPIO.BCM)
-        import atexit
-        atexit.register(partial(GPIO.cleanup, pin))
+        if pin:
+            GPIO.setmode(GPIO.BCM)
+            atexit.register(partial(GPIO.cleanup, pin))
+            pud = [GPIO.PUD_DOWN, GPIO.PUD_OFF, GPIO.PUD_UP][pullup + 1]
+            reset = GPIO.LOW if edge else GPIO.HIGH
+            edge = GPIO.RISING if edge else GPIO.FALLING
+            GPIO.setup(pin, GPIO.IN, pull_up_down=pud)
+            GPIO.add_event_detect(pin, edge, self.interrupt)
+
+            def is_reset(): return GPIO.input(pin) == reset
+        else:
+            def is_reset(): return True
 
         self._irq = Event()
-
-        pud = [GPIO.PUD_DOWN, GPIO.PUD_OFF, GPIO.PUD_UP][pullup + 1]
-        reset = GPIO.LOW if edge else GPIO.HIGH
-        edge = GPIO.RISING if edge else GPIO.FALLING
         callback = not_raising(callback)
-
-        GPIO.setup(pin, GPIO.IN, pull_up_down=pud)
-        GPIO.add_event_detect(pin, edge, lambda *x: self._irq.set())
 
         def loop():
             while True:
                 self._irq.wait()
                 callback()
-                if GPIO.input(pin) == reset:
+                if is_reset():
                     self._irq.clear()
 
         fork(loop)
+
+    def interrupt(self, *a, **kw):
+        """fire interrupt
+
+        All arguments are ignored.
+        """
+        self._irq.set()
 
 
 class Poller:

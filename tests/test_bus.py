@@ -1,33 +1,22 @@
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from piripherals import Bus
-
-
-def is_available(module):
-    try:
-        eval('import ' + module, {})
-        return True
-    except:
-        return False
 
 
 @pytest.fixture
 def bus0():
-    bus = Mock(spec=['read_byte_data', 'read_word_data', 'read_i2c_block_data',
-                     'write_byte_data', 'write_word_data', 'write_i2c_block_data'])
-    bus.read_byte_data.return_value = 0x3e
+    bus = Mock()
+    bus.read_byte_data.side_effect = [24, 42, 0xab, 0xcd, 0, 1]
     bus.read_word_data.return_value = 0xaffe
     bus.read_i2c_block_data.return_value = [1, 2, 3, 4, 5]
-    bus.write_byte_data.return_value = None
-    bus.write_word_data.return_value = None
-    bus.write_i2c_block_data.return_value = None
     return bus
 
 
 def test_read_byte(bus0):
     bus = Bus(bus0)
-    assert bus.read_byte(0, 1) == 0x3e
+    assert bus.read_byte(0, 1) == 24
     bus0.read_byte_data.assert_called_once_with(0, 1)
+    assert bus.read_byte(0, 1) == 42
 
 
 def test_read_word(bus0):
@@ -62,7 +51,7 @@ def test_write_block(bus0):
 
 def test_device_read_byte(bus0):
     dev = Bus(bus0).device(88)
-    assert dev.read_byte(23) == 0x3e
+    assert dev.read_byte(23) == 24
     bus0.read_byte_data.assert_called_once_with(88, 23)
 
 
@@ -99,21 +88,20 @@ def test_device_write_block(bus0):
 @pytest.fixture
 def bus1():
     bus = Mock(spec=['read_byte_data', 'write_byte_data'])
-    bus.read_byte_data.return_value = 0xa2
-    bus.write_byte_data.return_value = None
+    bus.read_byte_data.side_effect = [24, 42, 0xab, 0xcd, 0, 1]
     return bus
 
 
 def test_read_word2(bus1):
     bus = Bus(bus1)
-    assert bus.read_word(0, 0) == 0xa2a2
+    assert bus.read_word(0, 0) == 24 | (42 << 8)
     bus1.read_byte_data.assert_any_call(0, 0)
     bus1.read_byte_data.assert_any_call(0, 1)
 
 
 def test_read_block2(bus1):
     bus = Bus(bus1)
-    assert bus.read_block(4, 6, 3) == [0xa2] * 3
+    assert bus.read_block(4, 6, 3) == [24, 42, 0xab]
     bus1.read_byte_data.assert_any_call(4, 6)
     bus1.read_byte_data.assert_any_call(4, 7)
     bus1.read_byte_data.assert_any_call(4, 8)

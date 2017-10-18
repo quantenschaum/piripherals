@@ -7,7 +7,8 @@ def mpd():
     try:
         m = MPD()
         m.connect('localhost', 6600)
-        return m
+        yield m
+        m.disconnect()
     except:
         pytest.skip('no MPD connection')
 

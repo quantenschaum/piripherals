@@ -1,6 +1,13 @@
 """Wrapper classes to abstract bus access."""
 
 from functools import partial
+try:
+    from smbus import SMBus
+except:
+    try:
+        from smbus2 import SMBus
+    except:
+        pass
 
 __all__ = ['Bus', 'Device']
 
@@ -9,7 +16,8 @@ class Bus:
     """Abstraction for a data bus, i.e. I2C.
 
     Args:
-        bus: something with read and write methods.
+        bus: something with read and write methods. It does not have such
+            methods, bus is passed to ``SMBus(bus)``.
 
     The ``bus`` need to have at least the following methods
 
@@ -33,22 +41,29 @@ class Bus:
     - https://packages.debian.org/de/stretch/python-smbus
     """
 
-    def __init__(self, bus):
+    def __init__(self, bus=1):
+        if not hasattr(bus, 'read_byte_data'):
+            bus = SMBus(bus)
+
         self.read_byte = bus.read_byte_data
+
         try:
             self.read_word = bus.read_word_data
         except:
             pass
+
         try:
             self.read_block = bus.read_i2c_block_data
         except:
             pass
 
         self.write_byte = bus.write_byte_data
+
         try:
             self.write_word = bus.write_word_data
         except:
             pass
+
         try:
             self.write_block = bus.write_i2c_block_data
         except:
