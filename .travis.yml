@@ -7,4 +7,4 @@ install:
 script:
   - pytest --cov piripherals
 after_success:
-  - coveralls
+  coveralls
