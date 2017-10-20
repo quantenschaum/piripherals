@@ -6,5 +6,4 @@ install:
   - pip install .[MPD,I2C] pytest pytest-cov coveralls
 script:
   - pytest --cov piripherals
-after_sucess:
-  coveralls
+  - coveralls
