@@ -49,17 +49,17 @@ help:
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILDDIR)/ ../gh-pages/*
+	rm -rf $(BUILDDIR)/
 
 .PHONY: auto
 auto:
-	sphinx-autobuild . ../gh-pages/ -z ../piripherals -B
+	sphinx-autobuild . $(BUILDDIR)/html -z ../piripherals -B
 
 .PHONY: html
 html:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) ../gh-pages #$(BUILDDIR)/html
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
-	@echo "Build finished. The HTML pages are in ../gh-pages"
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
 .PHONY: dirhtml
 dirhtml:
