@@ -2,7 +2,6 @@ import pytest
 from piripherals import MPD
 from unittest.mock import Mock, MagicMock
 from piripherals.util import noop
-from io import StringIO as sio
 
 
 _data = []
