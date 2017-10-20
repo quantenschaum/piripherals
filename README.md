@@ -1,6 +1,7 @@
 ![pypi](https://img.shields.io/pypi/v/piripherals.svg)
 ![license](https://img.shields.io/pypi/l/piripherals.svg)
 [![Build Status](https://travis-ci.org/quantenschaum/piripherals.svg?branch=master)](https://travis-ci.org/quantenschaum/piripherals)
+[![Documentation Status](https://readthedocs.org/projects/piripherals/badge/?version=latest)](http://piripherals.readthedocs.io/en/latest/?badge=latest)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/quantenschaum)
 
 # piripherals
@@ -26,4 +27,8 @@ classes you actually use.
 
 ## Documentation
 
-Generate it with Sphinx (`cd docs && make html`) or [read it online](https://quantenschaum.github.io/piripherals/).
+Generate it with Sphinx (`cd docs && make html`) or [read it online](http://piripherals.rtfd.io/).
+
+## Tests
+
+Unittesting is done using PyTest, run `pytest` to execute the tests.
