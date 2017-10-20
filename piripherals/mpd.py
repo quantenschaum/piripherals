@@ -5,6 +5,8 @@ try:
 except:
     pass
 
+__all__ = ['MPD']
+
 
 class MPD(object):
     """Wrapper for `MPDClient`_ that adds

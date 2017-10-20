@@ -3,11 +3,12 @@
 .. _rpi_ws281x: https://pypi.python.org/pypi/rpi_ws281x
 """
 
-__all__ = ['NeoPixels']
 
 from time import sleep
 from .util import *
 from threading import Thread, Condition, RLock
+
+__all__ = ['NeoPixels']
 
 
 def wheel(p):

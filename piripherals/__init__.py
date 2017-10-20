@@ -1,7 +1,6 @@
 """a collection of classes to interact with peripherals for the RaspberryPi"""
 
 from .__version__ import *
-
 from .led import *
 from .bus import *
 from .mpr121 import *
