@@ -35,7 +35,7 @@ class MPD(object):
         if not callable(a):
             return a
 
-        def b(*args, **kwargs):
+        def a_with_reconnect(*args, **kwargs):
             try:
                 return a(*args, **kwargs)
             except (MPDConnectionError, ConnectionError) as e:
@@ -46,7 +46,7 @@ class MPD(object):
                 self.connect(*cargs, **ckwargs)
                 return a(*args, **kwargs)
 
-        return b
+        return a_with_reconnect
 
     def __setattr__(self, name, value):
         self._mpd.__setattr__(name, value)

@@ -1,11 +1,12 @@
 import pytest
 from unittest.mock import Mock
 from piripherals import Bus
+from smbus2 import SMBus
 
 
 @pytest.fixture
 def bus0():
-    bus = Mock()
+    bus = Mock(spec=SMBus)
     bus.read_byte_data.side_effect = [24, 42, 0xab, 0xcd, 0, 1]
     bus.read_word_data.return_value = 0xaffe
     bus.read_i2c_block_data.return_value = [1, 2, 3, 4, 5]
@@ -88,20 +89,20 @@ def test_device_write_block(bus0):
 @pytest.fixture
 def bus1():
     bus = Mock(spec=['read_byte_data', 'write_byte_data'])
-    bus.read_byte_data.side_effect = [24, 42, 0xab, 0xcd, 0, 1]
+    bus.read_byte_data.side_effect = [0xab, 0xcd, 0]
     return bus
 
 
 def test_read_word2(bus1):
     bus = Bus(bus1)
-    assert bus.read_word(0, 0) == 24 | (42 << 8)
+    assert bus.read_word(0, 0) == 0xab | (0xcd << 8)
     bus1.read_byte_data.assert_any_call(0, 0)
     bus1.read_byte_data.assert_any_call(0, 1)
 
 
 def test_read_block2(bus1):
     bus = Bus(bus1)
-    assert bus.read_block(4, 6, 3) == [24, 42, 0xab]
+    assert bus.read_block(4, 6, 3) == [0xab, 0xcd, 0]
     bus1.read_byte_data.assert_any_call(4, 6)
     bus1.read_byte_data.assert_any_call(4, 7)
     bus1.read_byte_data.assert_any_call(4, 8)
