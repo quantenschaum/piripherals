@@ -1,12 +1,11 @@
 import pytest
 from unittest.mock import Mock
 from piripherals import Bus
-from smbus2 import SMBus
 
 
 @pytest.fixture
 def bus0():
-    bus = Mock(spec=SMBus)
+    bus = Mock()
     bus.read_byte_data.side_effect = [24, 42, 0xab, 0xcd, 0, 1]
     bus.read_word_data.return_value = 0xaffe
     bus.read_i2c_block_data.return_value = [1, 2, 3, 4, 5]

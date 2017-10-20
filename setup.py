@@ -19,7 +19,7 @@ setup(
     packages=['piripherals'],  # find_packages(),
     python_requires='>=3.5',
     # install_requires=['rpi_ws281x'],
-    setup_requires=['pytest-runner'],
+    # setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     extras_require={
         'LED': ["rpi_ws281x"],
