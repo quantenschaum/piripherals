@@ -174,3 +174,7 @@ class Device:
         self.write_byte = partial(bus.write_byte, addr)
         self.write_word = partial(bus.write_word, addr)
         self.write_block = partial(bus.write_block, addr)
+
+    def __getitem__(self, r): return self.read_byte(r)
+
+    def __setitem__(self, r, b): self.write_byte(r, b)
