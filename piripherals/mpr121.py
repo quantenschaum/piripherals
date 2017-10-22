@@ -136,7 +136,7 @@ class MPR121:
             0 disables IRQ, uses polling instead
         handlers (bool): enable IRQ handler/polling, if disabled ``update_touch_state()``
             has to be called explicitly
-        setup (bool): configure with (sane) defaults 
+        setup (bool): configure with (sane) defaults
         reset (bool): reset on initialization
         **kwargs: arguments to setup()
     """
@@ -152,7 +152,10 @@ class MPR121:
         from .bus import Bus
         self.addr = addr
         self.overcurrent = False
-        self._bus = Bus(bus).device(addr)
+        if hasattr(bus, 'device'):
+            self._bus = bus.device(addr)
+        else:
+            self._bus = Bus(bus).device(addr)
         self._handlers = [noop] * NCH
         self._touched = 0
 
