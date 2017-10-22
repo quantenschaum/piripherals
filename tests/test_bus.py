@@ -53,6 +53,8 @@ def test_device_read_byte(bus0):
     dev = Bus(bus0).device(88)
     assert dev.read_byte(23) == 24
     bus0.read_byte_data.assert_called_once_with(88, 23)
+    assert dev[3] == 42
+    bus0.read_byte_data.assert_called_with(88, 3)
 
 
 def test_device_read_word(bus0):
@@ -71,6 +73,8 @@ def test_device_write_byte(bus0):
     dev = Bus(bus0).device(88)
     dev.write_byte(4, 66)
     bus0.write_byte_data.assert_called_once_with(88, 4, 66)
+    dev[11] = 0xcc
+    bus0.write_byte_data.assert_called_with(88, 11, 0xcc)
 
 
 def test_device_write_word(bus0):
