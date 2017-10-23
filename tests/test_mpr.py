@@ -9,9 +9,10 @@ with the MPR121 connected.
 """
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, ANY
 from piripherals import MPR121
 from piripherals.bus import Bus
+from time import sleep
 
 HARDWARE = 0
 ADDR = 0x5a
@@ -246,7 +247,7 @@ def test_mpr121_set_threshold2(bus):
                      })
 
 
-def test_mpr121_set_debounce(bus):
+def test_mpr121_debounce(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     mpr.debounce(touch=2, release=3)
     dev = bus.device(0x5a)
@@ -257,3 +258,155 @@ def test_mpr121_set_debounce(bus):
     assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
                      0x5b: (5 << 4) | 5
                      })
+
+
+def test_mpr121_gpio_setup(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    for i in range(8):
+        mpr.gpio_setup(i + 4, output=i % 2, mode=i % 4)
+    dev = bus.device(0x5a)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+                     0x73: 0b11001100,
+                     0x74: 0b10001000,
+                     0x76: 0b10101010,
+                     0x77: 0b11111111,
+                     })
+
+
+def test_mpr121_gpio_status(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    dev.write_byte(0x75, 0b11001011)
+    assert mpr.gpio_status() == 0b11001011
+
+
+def test_mpr121_gpio_set(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    for i in range(8):
+        mpr.gpio_set(i + 4, 1)
+        mpr.gpio_set(i + 4, 0)
+        assert_reg(dev, {0x78: 1 << i, 0x79: 1 << i}, only_non_zero=1)
+
+
+def test_mpr121_touched(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    assert mpr.touched() == 0
+    mpr.update_touch_state()
+    handlers = []
+    for i in range(13):
+        handlers.append(Mock())
+        mpr.on_touch(i, handlers[i])
+        assert not mpr.is_touched(i)
+
+    for i in range(13):
+        dev.write_word(0, 1 << i)
+        mpr.update_touch_state()
+        for k in range(13):
+            assert mpr.is_touched(k) == (k == i), '{} touched'.format(i)
+            if k <= i:
+                handlers[k].assert_called_with(k == i, k)
+            elif k > i:
+                handlers[k].assert_not_called()
+
+
+@pytest.mark.xfail(strict=1)
+def test_mpr121_overcurrent(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    dev.write_byte(1, 1 << 7)
+    mpr.update_touch_state()
+
+
+@pytest.mark.xfail(strict=1)
+def test_mpr121_out_of_range(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    dev.write_byte(2, 1)
+    mpr.update_touch_state()
+
+
+@pytest.mark.xfail(strict=1)
+def test_mpr121_autoconf_failed(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    dev.write_byte(3, 1 << 6)
+    mpr.update_touch_state()
+
+
+@pytest.mark.xfail(strict=1)
+def test_mpr121_autoreconf_failed(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=0)
+    dev = bus.device(0x5a)
+    dev.write_byte(3, 1 << 7)
+    mpr.update_touch_state()
+
+
+def test_mpr121_setup(bus):
+    mpr = MPR121(bus=bus, handlers=0, setup=1)
+    dev = bus.device(0x5a)
+    assert_reg(dev, {0x2b: 0x05, 0x2c: 0x01, 0x2d: 0x03, 0x2e: 0x14, 0x2f: 0x05,
+                     0x30: 0x01, 0x31: 0x03, 0x32: 0x14, 0x36: 0x01, 0x37: 0x01, 0x38: 0x03,
+                     0x39: 0x14, 0x3a: 0x01, 0x3b: 0x01, 0x3c: 0x03, 0x3d: 0x14, 0x41: 0x32,
+                     0x42: 0x1e, 0x43: 0x32, 0x44: 0x1e, 0x45: 0x32, 0x46: 0x1e, 0x47: 0x32,
+                     0x48: 0x1e, 0x49: 0x32, 0x4a: 0x1e, 0x4b: 0x32, 0x4c: 0x1e, 0x4d: 0x32,
+                     0x4e: 0x1e, 0x4f: 0x32, 0x50: 0x1e, 0x51: 0x32, 0x52: 0x1e, 0x53: 0x32,
+                     0x54: 0x1e, 0x55: 0x32, 0x56: 0x1e, 0x57: 0x32, 0x58: 0x1e, 0x59: 0x0c,
+                     0x5a: 0x07, 0x5b: 0x22, 0x5c: 0x5e, 0x5d: 0x28, 0x5e: 0xcc, 0x7b: 0x6f,
+                     0x7c: 0x07, 0x7d: 0xc8, 0x7e: 0x82, 0x7f: 0xb4, 0x80: 0x63})
+
+
+def test_mpr121_polling(bus):
+    mpr = MPR121(bus=bus, handlers=1, irq=0, setup=1)
+    handlers = []
+    dev = bus.device(0x5a)
+    for i in range(13):
+        handlers.append(Mock())
+        mpr.on_touch(i, handlers[i])
+
+    for i in range(13):
+        dev.write_word(0, 1 << i)
+        sleep(0.05)  # give poller time pick up the state change
+        handlers[i].assert_called_once_with(True, i)
+        dev.write_word(0, 0)
+        sleep(0.05)
+        handlers[i].assert_called_with(False, i)
+
+
+@patch('piripherals.util.GPIO', create=1)
+def test_mpr121_irq(GPIO, bus):
+    mpr = MPR121(bus=bus, handlers=1, irq=4, setup=1)
+
+    print(GPIO.mock_calls)
+    GPIO.setmode.assert_called_with(GPIO.BCM)
+    GPIO.setup.assert_called_with(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect.assert_called_with(4, GPIO.FALLING, ANY)
+    irq = GPIO.add_event_detect.call_args[0][2]
+
+    handlers = []
+    dev = bus.device(0x5a)
+    for i in range(13):
+        handlers.append(Mock())
+        mpr.on_touch(i, handlers[i])
+
+    for i in range(13):
+        dev.write_word(0, 1 << i)
+        irq()
+        sleep(0.01)
+        handlers[i].assert_called_once_with(True, i)
+        dev.write_word(0, 0)
+        irq()
+        sleep(0.01)
+        handlers[i].assert_called_with(False, i)
+
+
+def test_mpr121_dump(bus, capsys):
+    'see if dump() does not crash'
+    mpr = MPR121(bus=bus, handlers=0, setup=1)
+    mpr.dump()
+    out, err = capsys.readouterr()
+    assert 'raw base diff' in out
+    assert '0x5c = 0x5e b01011110  94' in out
+    assert '0x7b = 0x6f b01101111 111' in out
+    assert '0x7b = 0x6f b01101111 111' in out
