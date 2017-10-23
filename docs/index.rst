@@ -45,6 +45,7 @@ Modules
    :maxdepth: 1
 
    piripherals.bus
+   piripherals.button
    piripherals.led
    piripherals.mpd
    piripherals.mpr121
