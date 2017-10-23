@@ -1,6 +1,6 @@
 [![Documentation Status](https://readthedocs.org/projects/piripherals/badge/?version=latest)](http://piripherals.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/quantenschaum/piripherals.svg?branch=master)](https://travis-ci.org/quantenschaum/piripherals)
-[![Coverage Status](https://coveralls.io/repos/github/quantenschaum/piripherals/badge.svg?branch=master)](https://coveralls.io/github/quantenschaum/piripherals?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/quantenschaum/piripherals/badge.svg)](https://coveralls.io/github/quantenschaum/piripherals)
 [![pypi](https://img.shields.io/pypi/v/piripherals.svg)](https://pypi.python.org/pypi/piripherals)
 [![license](https://img.shields.io/pypi/l/piripherals.svg)](LICENSE)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/quantenschaum)
