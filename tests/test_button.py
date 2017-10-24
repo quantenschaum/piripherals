@@ -110,13 +110,16 @@ def test_double_click(btn):
 def test_hold(btn):
     btn.press()
     assert btn.is_down()
+    assert not btn.is_held()
     held.assert_not_called()
     sleep(H)
     btn.press()
+    assert btn.is_held()
     assert btn.is_down()
     sleep(T)
     btn.release()
     assert btn.is_up()
+    assert not btn.is_held()
     sleep(D)
     btn.release()
     assert btn.is_up()
@@ -127,10 +130,12 @@ def test_hold(btn):
 def test_hold_repeat(btn):
     btn.press()
     assert btn.is_down()
+    assert not btn.is_held()
     held.assert_not_called()
     sleep(H)
     btn.press()
     assert btn.is_down()
+    assert btn.is_held()
     held.assert_called_once_with(0)
     sleep(T)
     btn.press()
@@ -163,3 +168,88 @@ def test_click_hold(btn):
     assert btn.is_down()
     held.assert_called_once_with(1)
     clicked.assert_not_called()
+
+
+def do_click(btn, n):
+    for i in range(n):
+        btn(1)
+        sleep(T)
+        btn(0)
+        sleep(T)
+    sleep(D)
+    btn(0)
+
+
+def do_hold(btn, n):
+    for i in range(n):
+        btn(1)
+        sleep(T)
+        btn(0)
+        sleep(T)
+    btn(1)
+    sleep(H)
+    btn(1)
+    btn(0)
+
+
+def test_clicks_and_holds(btn):
+    do_click(btn, 0)
+    clicked.assert_not_called()
+    do_click(btn, 1)
+    clicked.assert_called_once_with(1)
+    do_click(btn, 2)
+    clicked.assert_called_with(2)
+    do_click(btn, 3)
+    clicked.assert_called_with(3)
+
+    held.assert_not_called()
+
+    do_hold(btn, 0)
+    held.assert_called_once_with(0)
+    do_hold(btn, 1)
+    held.assert_called_with(1)
+    do_hold(btn, 3)
+    held.assert_called_with(3)
+
+    assert clicked.call_count == 3
+
+
+def test_handlers():
+    btn = ClickButton(click_time=T, double_click_time=D,
+                      hold_time=H, hold_repeat=R)
+    click1 = Mock(side_effect=Exception)  # button must be exception resistant
+    btn.on_click(1, click1)
+    click2 = Mock(side_effect=Exception)
+    btn.on_click(2, click2)
+    hold0 = Mock(side_effect=Exception)
+    btn.on_hold(0, hold0)
+    hold1 = Mock(side_effect=Exception)
+    btn.on_hold(1, hold1)
+
+    do_click(btn, 1)
+    do_click(btn, 4)
+    click1.assert_called_once_with()
+    click2.assert_not_called()
+    hold0.assert_not_called()
+    hold1.assert_not_called()
+
+    do_click(btn, 2)
+    do_click(btn, 3)
+    click1.assert_called_once_with()
+    click2.assert_called_once_with()
+    hold0.assert_not_called()
+    hold1.assert_not_called()
+
+    do_hold(btn, 0)
+    do_hold(btn, 2)
+    click1.assert_called_once_with()
+    click2.assert_called_once_with()
+    hold0.assert_called_once_with()
+    hold1.assert_not_called()
+
+    do_hold(btn, 1)
+    do_hold(btn, 3)
+    click1.assert_called_once_with()
+    click2.assert_called_once_with()
+    hold0.assert_called_once_with()
+    hold1.assert_called_once_with()

@@ -1,4 +1,4 @@
-"""Thing that have to do with buttons.
+"""Things that have to do with buttons, digital inputs.
 
 Use GPIO pins as button inputs with debouncing and multi-click and hold-detection.
 """
@@ -6,6 +6,7 @@ Use GPIO pins as button inputs with debouncing and multi-click and hold-detectio
 from .util import not_raising
 import atexit
 from threading import Thread, Event
+from functools import partial
 from time import sleep, monotonic
 try:
     import RPi.GPIO as GPIO
@@ -23,12 +24,12 @@ class ClickButton:
 
     .. note::
 
-        Most debouncing code out there is wrong. The debounce functoinality of
+        Most debouncing code out there is wrong. The debounce functionality of
         RPi.GPIO just suppresses events, but does not debounce. Debouncing
         correctly in software is tricky but doable.
         Read this http://www.ganssle.com/debouncing.htm.
 
-    This button can be bound to GPIO pins but it can used with other
+    This button can be bound to GPIO pins but it can be used with other
     input sources as well.
 
     **What is click, hold, up/down, pressed/released?**
@@ -40,7 +41,7 @@ class ClickButton:
     The state is `changed` when :meth:`update` was called with a parameter different from
     the previous call. If the state did not change for a time > ``click_time``, the
     button in considered `down` (stated changed to `pressed`) or `up` (state changed to `released`).
-    The effectivly debounces the input. The final state wins, but quick jumps between states
+    This effectivly debounces the input. The final state wins, but quick jumps between states
     are filtered out.
 
     The button is considered `clicked` when
@@ -49,19 +50,20 @@ class ClickButton:
     2. and then `released` for > ``double_click_time`` (click is fired)
 
     If it was pressed again after beeing released within < ``double_click_time``,
-    another click may be counted (goto 1.). This way n-clicks can be detected.
+    another click may be counted (start again at 1.). This way n-clicks can be detected.
 
     The button is considered `held` when it was `pressed` for > ``hold_time``
     (enter hold state). There might have been preceding clicks, that have been
     counted, but not fired. This way we get n-hold, with n beeing the number of
-    clicks preceding the hold.
-
-
+    clicks preceding the hold. Hold events are fired as long as the button stays
+    held with ``hold_repeat`` delay, if ``hold_repeat`` > 0.
 
     .. attention::
 
         Setting ``when_clicked`` or ``when_held`` disables any handlers
-        registered with :meth:`on_click` or :meth:`on_hold`.
+        registered with :meth:`on_click` or :meth:`on_hold`. So there is
+        either a single click/hold handler or a handler for each type of
+        click/hold.
 
     Args:
         pin (int): BCM_ pin to bind to, 0 = do not use GPIO
@@ -100,10 +102,10 @@ class ClickButton:
         self.hold_time = hold_time
         self.hold_repeat = hold_repeat
         if when_clicked:
-            self.when_clicked = when_clicked
+            self.when_clicked = not_raising(when_clicked)
         self.click_handlers = {}
         if when_held:
-            self.when_held = when_held
+            self.when_held = not_raising(when_held)
         self.hold_handlers = {}
         if pin:
             self.bind(pin)
@@ -160,18 +162,6 @@ class ClickButton:
         self.hold_handlers[n] = partial(callback, *args, **kwargs)
         return callback
 
-    def _fire(self, clicked):
-        "fire click or hold"
-        n = self.clicks
-        if clicked:
-            self.clicks = 0
-        function = self.when_clicked if clicked else self.when_held
-        if function:
-            try:
-                function(n)
-            except Exception as x:
-                exception(x)
-
     def update(self, pressed, now=None):
         """update state.
 
@@ -204,17 +194,18 @@ class ClickButton:
                 self.time = now
             else:  # still released
                 if self.clicks and dt > self.double_click_time:
-                    self._fire(True)
+                    self.when_clicked(self.clicks)
+                    self.clicks = 0
         elif was_pressed:
             if is_pressed:  # still pressed
                 if self.held:
                     if self.hold_repeat and dt > self.hold_repeat:
                         self.time = now
-                        self._fire(False)
+                        self.when_held(self.clicks)
                 elif dt > self.hold_time:  # state changed --> held
                     self.held = True
                     self.time = now
-                    self._fire(False)
+                    self.when_held(self.clicks)
             else:  # state changed --> released
                 if self.held:
                     self.clicks = 0
