@@ -1,10 +1,10 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, ANY
 from time import sleep, monotonic
 
 from piripherals.button import *
 
-T = 0.01  # base time unit
+T = 0.05  # base time unit
 D = 3 * T
 H = 10 * T
 R = 5 * T
@@ -253,3 +253,66 @@ def test_handlers():
     click2.assert_called_once_with()
     hold0.assert_called_once_with()
     hold1.assert_called_once_with()
+
+
+@patch('piripherals.button.GPIO', create=1)
+def test_gpio(GPIO, btn):
+    #btn = ClickButton(pin=4, click_time=T, double_click_time=D, hold_time=H, hold_repeat=R)
+    btn.bind(4)
+
+    GPIO.setmode.assert_called_with(GPIO.BCM)
+    GPIO.setup.assert_called_with(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.add_event_detect.assert_called_with(4, GPIO.FALLING, ANY)
+    irq = GPIO.add_event_detect.call_args[0][2]
+
+    def down():
+        GPIO.input.return_value = GPIO.LOW
+        irq()
+
+    def up(): GPIO.input.return_value = GPIO.HIGH
+
+    TT, DD, HH = 1.2 * T, 1.2 * D, 1.2 * H
+
+    # single click
+    down()
+    sleep(T / 10)
+    up()  # bounce
+    sleep(T / 10)
+    down()
+    sleep(TT)
+    clicked.assert_not_called()
+    up()
+    clicked.assert_not_called()
+    sleep(TT)
+    clicked.assert_not_called()
+    sleep(DD)
+    clicked.assert_called_once_with(1)
+
+    # double click
+    down()
+    sleep(TT)
+    up()
+    sleep(TT)
+    down()
+    sleep(TT)
+    up()
+    sleep(DD)
+    clicked.assert_called_with(2)
+
+    # hold
+    down()
+    held.assert_not_called()
+    sleep(HH)
+    held.assert_called_once_with(0)
+    up()
+    sleep(DD)
+
+    # click hold
+    down()
+    sleep(TT)
+    up()
+    sleep(TT)
+    down()
+    sleep(HH)
+    held.assert_called_with(1)
+    up()

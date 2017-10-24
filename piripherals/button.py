@@ -269,12 +269,12 @@ class ClickButton:
         pullup = [GPIO.PUD_DOWN, GPIO.PUD_OFF, GPIO.PUD_UP][pullup + 1]
         pressed = GPIO.LOW if low_active else GPIO.HIGH
         edge = GPIO.FALLING if low_active else GPIO.RISING
-        GPIO.setup(pin, GPIO.IN, pull_up_down=pud)
-
+        GPIO.setup(pin, GPIO.IN, pull_up_down=pullup)
         event = Event()
+        GPIO.add_event_detect(pin, edge, lambda *x: event.set())
 
-        def dopoll():
-            k = 0
+        def poll():
+            k = -1
             while True:
                 if k < 0:
                     event.clear()
@@ -287,8 +287,7 @@ class ClickButton:
                     k -= 1
                 sleep(delay)
 
-        Thread(target=dopoll, daemon=True).start()
-        GPIO.add_event_detect(pin, edge, lambda *x: event.set())
+        Thread(target=poll, daemon=True).start()
 
     __call__ = update
     __bool__ = is_down

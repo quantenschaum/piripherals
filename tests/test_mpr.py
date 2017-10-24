@@ -378,7 +378,6 @@ def test_mpr121_polling(bus):
 def test_mpr121_irq(GPIO, bus):
     mpr = MPR121(bus=bus, handlers=1, irq=4, setup=1)
 
-    print(GPIO.mock_calls)
     GPIO.setmode.assert_called_with(GPIO.BCM)
     GPIO.setup.assert_called_with(4, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.add_event_detect.assert_called_with(4, GPIO.FALLING, ANY)
