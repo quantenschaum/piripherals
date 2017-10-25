@@ -119,7 +119,6 @@ html_theme_options = {
     #'github_banner': 'true',
     'github_user': 'quantenschaum',
     'github_repo': 'piripherals',
-    'analytics_id': 'UA-107589767-1',
 }
 
 # https://github.com/bitprophet/alabaster/issues/97
