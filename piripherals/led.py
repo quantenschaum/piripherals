@@ -1,12 +1,14 @@
-"""an interface to NeoPixel LEDs based on `rpi_ws281x`_.
+"Things that have to do with controlling LEDs"
 
-.. _rpi_ws281x: https://pypi.python.org/pypi/rpi_ws281x
-"""
-
-
-from time import sleep
-from .util import *
+from time import sleep, monotonic
 from threading import Thread, Condition, RLock
+from math import exp, cos, pi, floor, ceil
+from datetime import datetime
+from .util import *
+try:
+    from rpi_ws281x import PixelStrip
+except:
+    pass
 
 __all__ = ['NeoPixels']
 
@@ -24,41 +26,47 @@ def wheel(p):
 
 
 class NeoPixels(object):
-    """NeoPixels with asynchronous animation support."""
+    """an interface to NeoPixel LEDs based on rpi_ws281x_.
 
-    def __init__(self, num=1, pin=12, type='GRB'):
-        from rpi_ws281x import PixelStrip
-        self.strip = PixelStrip(num, pin)
-        self.strip.begin()
-        self.strip.show()
+    This wraps around PixelStrip_ and adds additional functionality,
+    especially asynchronous animation support.
+
+    Constructor arguments are passed to PixelStrip_.
+
+    Args:
+        num (int): # of LEDs on the strip
+        pin (int): BCM_ pin number of data pin. not all pins are allowed,
+            see `pin usage`_ information of rpi_ws281x_.
+
+    .. _rpi_ws281x: https://pypi.python.org/pypi/rpi_ws281x
+    .. _PixelStrip: https://github.com/pimoroni/rpi_ws281x-python/blob/master/library/rpi_ws281x/rpi_ws281x.py#L51
+    .. _pin usage: https://github.com/pimoroni/rpi_ws281x/blob/master/README.md
+    .. _BCM: https://pinout.xyz/
+    """
+
+    _strip = None
+
+    def __init__(self, *args, **kwargs):
+        if 'brightness' not in kwargs:
+            kwargs['brightness'] = 255
+        self._strip = PixelStrip(*args, **kwargs)
+        self.auto_show = True
+        self._strip.begin()
+        self._strip.show()
         self._start_loop()
 
-    def brightness(self, b=1):
-        self._running = False
-        self._cond.acquire()
-        self.strip.setBrightness(int(255 * b))
-        self.strip.show()
-        self._cond.release()
+    def __getattr__(self, name):
+        a = getattr(self._strip, name)
 
-    def color(self, led=None, r=0, g=-1, b=-1, v=-1):
-        self._running = False
-        self._cond.acquire()
-        if led and led < 0:
-            led += self.strip.numPixels()
-        if g < 0:
-            g = r
-        if b < 0:
-            b = g
-        if v >= 0:
-            self.strip.setBrightness(int(255 * v))
-        rgb = [int(255 * v) for v in (r, g, b)]
-        if led is None:
-            for i in range(self.strip.numPixels()):
-                self.strip.setPixelColorRGB(i, *rgb)
-        else:
-            self.strip.setPixelColorRGB(led, *rgb)
-        self.strip.show()
-        self._cond.release()
+        def b(*args, **kwargs):
+            self._running = False
+            self._cond.acquire()
+            a(*args, **kwargs)
+            if self.auto_show:
+                self._strip.show()
+            self._cond.release()
+
+        return b
 
     def _start_loop(self):
         self._cond = Condition(RLock())
@@ -72,9 +80,7 @@ class NeoPixels(object):
                 try:
                     self._animation_loop()
                 except:
-                    self._cond.notify()
-                    self._cond.release()
-                    raise
+                    self._running = False
                 if self._atexit:
                     self._atexit()
 
@@ -84,19 +90,18 @@ class NeoPixels(object):
         self._cond.release()
 
     def _animation_loop(self):
-        from time import monotonic
         t0 = monotonic()
         try:
             self._running = True
             while self._running:
-                t = monotonic() - t0
+                t = monotonic() - t0  # time since animation start
                 if self._timeout and t > self._timeout:
                     break
-                tau = (t * self._freq) % 1
-                self._func(t, tau)
+                s = (t * self._freq) % 1  # normalized period time
+                self._func(t, s)
                 if self._fade:
-                    self.strip.setBrightness(int(255 * (1 - t / self._fade)))
-                self.strip.show()
+                    self._strip.setBrightness(int(255 * (1 - t / self._fade)))
+                self._strip.show()
                 sleep(self._delay)
         finally:
             self._running = False
@@ -128,27 +133,55 @@ class NeoPixels(object):
             self._cond.wait()
         self._cond.release()
 
+    def brightness(self, b=1):
+        self.setBrightness(int(255 * b))
+
+    def color(self, led=None, r=0, g=-1, b=-1, v=-1):
+        self._running = False
+        self._cond.acquire()
+        if led and led < 0:
+            led += self._strip.numPixels()
+        if g < 0:
+            g = r
+        if b < 0:
+            b = g
+        if v >= 0:
+            self._strip.setBrightness(int(255 * v))
+        rgb = [int(255 * v) for v in (r, g, b)]
+        if led is None:
+            for i in range(self._strip.numPixels()):
+                self._strip.setPixelColorRGB(i, *rgb)
+        else:
+            self._strip.setPixelColorRGB(led, *rgb)
+        if self.auto_show:
+            self._strip.show()
+        self._cond.release()
+
+    def rainbow(self, **kwargs):
+        def f(t, s):
+            n = self._strip.numPixels()
+            for i in range(n):
+                self._strip.setPixelColorRGB(i, *wheel((i / n - s) % 1))
+
+        self.animate(f, **kwargs)
+
     def breathe(self, n=1, fade=0, color=None, **kwargs):
-        from math import exp, cos, pi
-        a, b = exp(-n), 1 / (exp(n) - exp(-n))
         if fade:
             def h(t): return 1 - t / fade
             kwargs['timeout'] = fade
         else:
             def h(t): return 1
 
+        a, b = exp(-n), 1 / (exp(n) - exp(-n))
+
         def g(t, s): return b * (exp(-n * cos(2 * pi * s)) - a) * h(t)
 
-        def f(t, s): return self.strip.setBrightness(int(255 * g(t, s)))
-        if color:
-            self.color()
-        self.animate(f, **kwargs)
+        def f(t, s): return self._strip.setBrightness(int(255 * g(t, s)))
 
-    def rainbow(self, **kwargs):
-        def f(t, s):
-            n = self.strip.numPixels()
-            for i in range(n):
-                self.strip.setPixelColorRGB(i, *wheel((i / n - s) % 1))
+        self.brightness(0)
+
+        if color:
+            self.color(None, *color)
 
         self.animate(f, **kwargs)
 
@@ -160,7 +193,7 @@ class NeoPixels(object):
 
         def g(s): return pattern[int(s * l)]
 
-        def f(t, s): return self.strip.setBrightness(int(255 * g(s)))
+        def f(t, s): return self._strip.setBrightness(int(255 * g(s)))
         self.animate(f, **kwargs)
 
     def sequence(self,
@@ -170,17 +203,12 @@ class NeoPixels(object):
         colors = [tuple(map(lambda x: int(255 * float(x)), c)) for c in colors]
         l = len(colors)
 
-        def f(t, s): return self.strip.setPixelColorRGB(0, *colors[int(s * l)])
+        def f(t, s): return self._strip.setPixelColorRGB(
+            0, *colors[int(s * l)])
         self.animate(f, **kwargs)
 
-    def spin(self, **kwargs):
-        pass
-
     def clock(self, flash=0, secs=1, fade=0, **kwargs):
-        from datetime import datetime
-        from math import floor, ceil
-
-        n = self.strip.numPixels()
+        n = self._strip.numPixels()
 
         def color(r, g, b): return (r << 16) | (g << 8) | b
 
@@ -199,10 +227,10 @@ class NeoPixels(object):
                     ]
 
             def get(i):
-                return self.strip.getPixelColor(i)
+                return self._strip.getPixelColor(i)
 
             def set(i, c):
-                return self.strip.setPixelColor(i, c)
+                return self._strip.setPixelColor(i, c)
 
             def add(i, c):
                 set(i, get(i) | c)

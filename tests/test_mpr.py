@@ -10,9 +10,8 @@ with the MPR121 connected.
 
 import pytest
 from unittest.mock import Mock, patch, ANY
-from piripherals import MPR121
-from piripherals.bus import Bus
 from time import sleep
+from piripherals import MPR121, Bus
 
 HARDWARE = 0
 ADDR = 0x5a

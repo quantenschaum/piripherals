@@ -1,8 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch, ANY
 from time import sleep, monotonic
-
-from piripherals.button import *
+from piripherals import ClickButton
 
 T = 0.05  # base time unit
 D = 3 * T
