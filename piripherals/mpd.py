@@ -26,14 +26,16 @@ class MPD(object):
     .. _issue64: https://github.com/Mic92/python-mpd2/issues/64
     """
 
+    _mpd = None
+    _connect_args = None
+
     def __init__(self, maxvol=100, *args, **kwargs):
-        self.__dict__['maxvol'] = maxvol
-        self.__dict__['_mpd'] = MPDClient(*args, **kwargs)
-        self.__dict__['_connect_args'] = None
+        self._mpd = MPDClient(*args, **kwargs)
+        self.maxvol = maxvol
         self.timeout = 5
 
     def __getattr__(self, name):
-        a = self._mpd.__getattribute__(name)
+        a = getattr(self._mpd, name)
         if not callable(a):
             return a
 
@@ -41,7 +43,7 @@ class MPD(object):
             try:
                 return a(*args, **kwargs)
             except (MPDConnectionError, ConnectionError) as e:
-                cargs = self.__dict__['_connect_args']
+                cargs = self._connect_args
                 if not cargs:
                     raise
                 cargs, ckwargs = cargs
@@ -51,7 +53,10 @@ class MPD(object):
         return a_with_reconnect
 
     def __setattr__(self, name, value):
-        self._mpd.__setattr__(name, value)
+        if hasattr(self._mpd, name):
+            setattr(self._mpd, name, value)
+        else:
+            self.__dict__[name] = value
 
     def connect(self, *args, **kwargs):
         """establish connection
@@ -66,13 +71,13 @@ class MPD(object):
                 port (int): port, usually 6600
         """
         self.disconnect()
-        self.__dict__['_connect_args'] = args, kwargs
+        self._connect_args = args, kwargs
         self._mpd.connect(*args, **kwargs)
 
     def disconnect(self):
         """disconnect, disables auto reconnect"""
         try:
-            self.__dict__['_connect_args'] = None
+            self._connect_args = None
             self._mpd.close()
             self._mpd.disconnect()
         except (MPDConnectionError, ConnectionError) as e:

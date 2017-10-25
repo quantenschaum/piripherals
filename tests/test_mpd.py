@@ -75,7 +75,7 @@ OK = 'OK\n'
 
 
 def test_mpd_connect(mpd):
-    assert mpd.timeout < 10
+    assert mpd._mpd.timeout < 10
     _send(OK)
     mpd.status()
     mpd._mpd.disconnect()
