@@ -152,13 +152,20 @@ class NeoPixels(object):
         self._running = False
         self._cond.acquire()
         self._func = func
-        self._atexit = atexit or (lambda: self.color(v=1))
         self._freq = 1 / period if period else freq
         self._timeout = fade or ((cycles / self._freq) if cycles else timeout)
         self._fade = fade
         self._delay = delay
         if wait and not self._timeout:
             raise Exception('deadlock: wait=1 and timeout=0')
+
+        b0 = self._strip.getBrightness()
+
+        def reset():
+            self._strip.setBrightness(b0)
+            self.color()
+
+        self._atexit = atexit or reset
 
         self._cond.notify()
         if wait:
@@ -238,8 +245,6 @@ class NeoPixels(object):
 
         def f(p, s, t):  p.setBrightness(int(b0 * g(t, s)))
 
-        self.brightness(0)
-
         if color:
             self.color(None, *color)
 
@@ -270,8 +275,6 @@ class NeoPixels(object):
         b = self._strip.getBrightness()
 
         def f(p, s, t):  p.setBrightness(int(b * g(s) * h(t)))
-
-        self.brightness(0)
 
         if color:
             self.color(None, *color)

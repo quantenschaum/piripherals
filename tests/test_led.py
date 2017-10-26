@@ -4,7 +4,7 @@ from time import sleep
 from piripherals import NeoPixels
 from piripherals.util import noop
 
-T = 1
+T = 1  # animation period
 
 
 @pytest.fixture
@@ -20,23 +20,23 @@ def np():
                 return 128
 
         s.getBrightness.side_effect = brightness
+
         color_data = [0] * 3
-
-        def set_color(i, r, g, b):
-            color_data[i] = (r << 16) | (g << 8) | b
-
-        strip().setPixelColorRGB.side_effect = set_color
-        strip().color_data = color_data
+        s.color_data = color_data
+        s.setPixelColorRGB.side_effect = lambda i, r, g, b: color_data.__setitem__(
+            i, (r << 16) | (g << 8) | b)
+        s.setPixelColor.side_effect = color_data.__setitem__
+        s.getPixelColor.side_effect = color_data.__getitem__
         return NeoPixels(3, 12)
 
 
 def test_neopixels_color_and_brightness(np):
     strip = np._strip
-    np.brightness(1)
+    np.brightness(0.8)
     np.color(None, 0.1, 0.2, 0.3)
     assert strip.mock_calls == [call.begin(),
                                 call.show(),
-                                call.setBrightness(255),
+                                call.setBrightness(204),
                                 call.show(),
                                 call.numPixels(),
                                 call.setPixelColorRGB(0, 25, 51, 76),
@@ -48,11 +48,11 @@ def test_neopixels_color_and_brightness(np):
 def test_neopixels_color_and_brightness_no_auto(np):
     strip = np._strip
     np.auto_show = 0
-    np.brightness(1)
+    np.brightness(0.9)
     np.color(None, 0.1, 0.2, 0.3)
     assert strip.mock_calls == [call.begin(),
                                 call.show(),
-                                call.setBrightness(255),
+                                call.setBrightness(229),
                                 call.numPixels(),
                                 call.setPixelColorRGB(0, 25, 51, 76),
                                 call.setPixelColorRGB(1, 25, 51, 76),
@@ -125,7 +125,7 @@ def test_neopixels_raibow(np):
     assert strip.color_data == [0] * 3
     assert strip.setPixelColorRGB.call_count == 7 * 3
     assert strip.show.call_count == 8
-    strip.setBrightness.assert_called_once_with(255)
+    strip.setBrightness.assert_called_once_with(128)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 254, 0, 0), (1, 0, 254, 0), (2, 0, 0, 254),
                    (0, 126, 0, 128), (1, 128, 126, 0), (2, 0, 128, 126),
@@ -144,7 +144,7 @@ def test_neopixels_raibow_fade(np):
     assert strip.setPixelColorRGB.call_count == 7 * 3
     assert strip.show.call_count == 8
     assert strip.setBrightness.call_count == 7
-    strip.setBrightness.assert_called_with(255)
+    strip.setBrightness.assert_called_with(128)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 254, 0, 0), (1, 0, 254, 0), (2, 0, 0, 254),
                    (0, 126, 0, 128), (1, 128, 126, 0), (2, 0, 128, 126),
@@ -158,22 +158,48 @@ def test_neopixels_raibow_fade(np):
 
 def test_breathe(np):
     strip = np._strip
+    np.breathe(color=(0, 0, 1), cycles=3, period=T, wait=1, delay=T / 6)
+    assert_colors(strip.setPixelColorRGB.call_args_list,
+                  [(0, 0, 0, 255), (1, 0, 0, 255), (2, 0, 0, 255),
+                   (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
+    assert_brightness(strip.setBrightness.call_args_list, [
+        0, 13, 70, 127, 69, 12, 0, 13, 70, 127, 69, 12, 0, 13, 70, 127, 69, 12, 128
+    ], tol=10)
+
+
+def test_breathe_fade(np):
+    strip = np._strip
     np.breathe(color=[1], fade=3 * T, period=T, wait=1, delay=T / 6)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 255, 255, 255), (1, 255, 255, 255), (2, 255, 255, 255),
                    (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
     assert_brightness(strip.setBrightness.call_args_list, [
-                      0, 0, 12, 62, 106, 53, 8, 0, 8, 39, 63, 29, 9,
-                      0, 7, 31, 41, 14, 1, 255], tol=10)
+        0, 12, 62, 106, 53, 9, 0, 8, 39, 63, 30, 4, 0, 3, 15, 21, 7, 0, 128
+    ], tol=10)
 
 
 def test_blink(np):
     strip = np._strip
-    np.blink('1 0.3 1 0', cycles=2, period=T, wait=1, delay=T / 4)
+    np.blink('1 0.3 1 0', color=(1, 0, 0), cycles=2,
+             period=T, wait=1, delay=T / 4)
     assert_colors(strip.setPixelColorRGB.call_args_list,
-                  [(0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
+                  [(0, 255, 0, 0), (1, 255, 0, 0), (2, 255, 0, 0),
+                   (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
     assert_brightness(strip.setBrightness.call_args_list, [
-        0, 255, 76, 255, 0, 255, 76, 255, 0, 255])
+        128, 38, 128, 0, 128, 38, 128, 0, 128
+    ])
+
+
+def test_blink_fade(np):
+    strip = np._strip
+    np.blink('1 0.3 1 0', color=(0, 1, 0), fade=2 *
+             T, period=T, wait=1, delay=T / 4)
+    assert_colors(strip.setPixelColorRGB.call_args_list,
+                  [(0, 0, 255, 0), (1, 0, 255, 0), (2, 0, 255, 0),
+                   (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
+    assert_brightness(strip.setBrightness.call_args_list, [
+        127, 33, 95, 0, 63, 14, 31, 0, 128
+    ])
 
 
 def test_sequence(np):
@@ -183,4 +209,13 @@ def test_sequence(np):
                   [(0, 255, 0, 0), (0, 127, 127, 0), (0, 0, 255, 0),
                    (0, 0, 127, 127), (0, 0, 0, 255), (0, 127, 0, 127),
                    (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
-    assert_brightness(strip.setBrightness.call_args_list, [255])
+    assert_brightness(strip.setBrightness.call_args_list, [128])
+
+
+def test_clock(np):
+    strip = np._strip
+    np.clock(period=T, cycles=2, wait=1, delay=T / 2)
+    print(strip.mock_calls)
+    assert strip.show.call_count == 6
+    assert strip.setBrightness.call_count == 1
+    assert strip.setPixelColor.call_count >= 4 * 5
