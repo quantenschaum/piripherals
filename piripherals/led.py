@@ -297,15 +297,18 @@ class NeoPixels(object):
         def f(p, s, t): return p.setPixelColorRGB(0, *colors[int(s * l)])
         self.animate(f, **kwargs)
 
-    def clock(self, flash=1, secs=1, **kwargs):
+    def clock(self, secs=1, **kwargs):
         """a clock.
 
         Works best on a circular strip with 12 LEDs.
         Hours are red, minutes are green, seconds are blue.
 
         Args:
-            flash (bool): white second flash on 12th position
-            secs (bool): show blue seconds
+            secs (int): show blue seconds
+                0 = do not show seconds,
+                1 = show blue seconds,
+                2 = flash white seconds in 12th position,
+                3 = run white seconds around in loop
         for other args see :meth:`animate`
         """
 
@@ -343,12 +346,12 @@ class NeoPixels(object):
                 for i, v in pos((s + us * 1e-6) / 60, 0):
                     add(i, color(0, 0, int(255 * v**g)))
 
-            if flash > 1:
+            if secs > 2:
                 for i, v in pos((us * 1e-6), 0):
                     v = int(20 * v**g)
                     add(i, color(v, v, v))
 
-            if flash and us < 0.1e6:
+            if secs > 1 and us < 0.1e6:
                 add(0, color(80, 80, 80))
 
         self.animate(f, **kwargs)
@@ -369,6 +372,8 @@ def main():
                         default=0, help='fade out time in seconds')
     parser.add_argument('-p', '--period', type=float,
                         default=1, help='animation period in seconds')
+    parser.add_argument('-s', '--secs', type=int,
+                        default=1, help='clock seconds mode')
     args = parser.parse_args()
 
     p = NeoPixels(args.num, args.pin)
@@ -378,7 +383,7 @@ def main():
     m = args.mode
     kwargs = {'fade': args.fade, 'period': args.period}
     if m == 'clock':
-        p.clock(**kwargs)
+        p.clock(secs=args.secs, **kwargs)
     elif m == 'rainbow':
         p.rainbow(**kwargs)
     elif m == 'breathe':

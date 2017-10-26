@@ -119,7 +119,7 @@ def assert_brightness(act, exp, tol=0):
         assert abs(act[i][0][0] - exp[i]) <= tol
 
 
-def test_neopixels_raibow(np):
+def test_neopixels_rainbow(np):
     strip = np._strip
     np.rainbow(period=T, timeout=T, delay=T / 6, wait=1)
     assert strip.color_data == [0] * 3
@@ -137,7 +137,7 @@ def test_neopixels_raibow(np):
                   tol=10)
 
 
-def test_neopixels_raibow_fade(np):
+def test_neopixels_rainbow_fade(np):
     strip = np._strip
     np.rainbow(period=T, fade=T, delay=T / 6, wait=1)
     assert strip.color_data == [0] * 3
@@ -214,8 +214,8 @@ def test_sequence(np):
 
 def test_clock(np):
     strip = np._strip
-    np.clock(period=T, cycles=2, wait=1, delay=T / 2)
+    np.clock(secs=3, period=T, cycles=2, wait=1, delay=T / 2)
     print(strip.mock_calls)
     assert strip.show.call_count == 6
     assert strip.setBrightness.call_count == 1
-    assert strip.setPixelColor.call_count >= 4 * 5
+    assert strip.setPixelColor.call_count >= 4 * 8
