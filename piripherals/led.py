@@ -98,7 +98,7 @@ class NeoPixels(object):
                 if self._timeout and t > self._timeout:
                     break
                 s = (t * self._freq) % 1  # normalized period time
-                self._func(t, s)
+                self._func(self._strip, s, t)
                 if self._fade:
                     self._strip.setBrightness(int(255 * (1 - t / self._fade)))
                 self._strip.show()
@@ -116,6 +116,35 @@ class NeoPixels(object):
                 fade=0,
                 delay=0.01,
                 wait=False):
+        """asynchronous animation
+
+        The animation is executed on a separate thread. The animation is stopped,
+        when any function, that changes the state of the LEDs, is called. The
+        animation is defined in ``func``. This function gets passed 3 arguments:
+
+        - ``p`` - raw PixelStrip_, call methods of this to manipulate the LEDs,
+            which results in the animation
+        - ``s`` - normalized time in [0,1] in animation period, use this
+            to create cyclic animations
+        - ``t`` - time in seconds since startof animation
+
+        ``func`` is called repeatedly with ``delay`` between the calls.
+
+        Args:
+            func (callable(p,s,t)): animation function
+            atexit (callable()): exit hook, function to call after animation
+            freq (float): animation frequency in Hz
+            period (float): animation period in seconds (freq=1/period),
+                give either freq or period, period has higher priority
+            timeout (float): animation duration in seconds
+            cycles (float): animation cycle count, (timeout=cycles/freq)
+                give either timeout or cycles, cycles has higher priority
+            fade (float): fade out animation over this number of seconds
+                (sets timeout=fade)
+            delay (float): delay in seconds between calls of func
+            wait (bool): wait for animation to finish,
+                synchronous animation, requires timeout
+        """
 
         self._running = False
         self._cond.acquire()
@@ -126,7 +155,7 @@ class NeoPixels(object):
         self._fade = fade
         self._delay = delay
         if wait and not self._timeout:
-            raise Exception('dead lock: wait=1 and timeout=0')
+            raise Exception('deadlock: wait=1 and timeout=0')
 
         self._cond.notify()
         if wait:
@@ -134,9 +163,25 @@ class NeoPixels(object):
         self._cond.release()
 
     def brightness(self, b=1):
+        """set brightness, affects all LEDs
+
+        Args:
+            b (float): brightness in range [0,1]
+        """
         self.setBrightness(int(255 * b))
 
     def color(self, led=None, r=0, g=-1, b=-1, v=-1):
+        """set color
+
+        Args:
+            led (int): # of LED on strip to set the color for,
+                None = all LEDs
+            r (float): red value from range [0,1], if not given r = 0
+            g (float): green value from range [0,1], if not given g = r
+            b (float): blue value from range [0,1], if not given b = g
+            v (float): brightness, see :meth:`brightness`,
+                is applied to all LEDs
+        """
         self._running = False
         self._cond.acquire()
         if led and led < 0:
@@ -158,14 +203,24 @@ class NeoPixels(object):
         self._cond.release()
 
     def rainbow(self, **kwargs):
-        def f(t, s):
-            n = self._strip.numPixels()
+        "rotating rainbow animation, for args see :meth:`animate`"
+        def f(p, s, t):
+            n = p.numPixels()
             for i in range(n):
-                self._strip.setPixelColorRGB(i, *wheel((i / n - s) % 1))
+                p.setPixelColorRGB(i, *wheel((i / n - s) % 1))
 
         self.animate(f, **kwargs)
 
     def breathe(self, n=1, fade=0, color=None, **kwargs):
+        """brightness breathing animation.
+
+        This was inspired by http://sean.voisen.org/blog/2011/10/breathing-led-with-arduino/.
+
+        Args:
+            n (float): nonlinearity of brightness function
+            color(tuple(r,g,b)): color set on animation start
+        for other args see :meth:`animate`
+        """
         if fade:
             def h(t): return 1 - t / fade
             kwargs['timeout'] = fade
@@ -176,7 +231,7 @@ class NeoPixels(object):
 
         def g(t, s): return b * (exp(-n * cos(2 * pi * s)) - a) * h(t)
 
-        def f(t, s): return self._strip.setBrightness(int(255 * g(t, s)))
+        def f(p, s, t): return p.setBrightness(int(255 * g(t, s)))
 
         self.brightness(0)
 
@@ -193,7 +248,7 @@ class NeoPixels(object):
 
         def g(s): return pattern[int(s * l)]
 
-        def f(t, s): return self._strip.setBrightness(int(255 * g(s)))
+        def f(p, s, t): return p.setBrightness(int(255 * g(s)))
         self.animate(f, **kwargs)
 
     def sequence(self,
@@ -203,39 +258,31 @@ class NeoPixels(object):
         colors = [tuple(map(lambda x: int(255 * float(x)), c)) for c in colors]
         l = len(colors)
 
-        def f(t, s): return self._strip.setPixelColorRGB(
-            0, *colors[int(s * l)])
+        def f(p, s, t): return p.setPixelColorRGB(0, *colors[int(s * l)])
         self.animate(f, **kwargs)
 
     def clock(self, flash=0, secs=1, fade=0, **kwargs):
-        n = self._strip.numPixels()
 
         def color(r, g, b): return (r << 16) | (g << 8) | b
 
-        def f(t, s):
+        def f(p, s, t):
             now = datetime.now()
             h, m, s, us = now.hour, now.minute, now.second, now.microsecond
+            n = p.numPixels()
+            g = 2.5  # brightness gamma correction
 
             def pos(v, single=0):
                 v *= n
                 if single:
                     return [(round(v) % n, 1)]
                 else:
-                    return [
-                        (floor(v), (1 - v % 1)),  #
-                        (ceil(v) % n, (v % 1))
-                    ]
+                    return [(floor(v), (1 - v % 1)), (ceil(v) % n, (v % 1))]
 
-            def get(i):
-                return self._strip.getPixelColor(i)
+            def get(i): return p.getPixelColor(i)
 
-            def set(i, c):
-                return self._strip.setPixelColor(i, c)
+            def set(i, c): return selprip.setPixelColor(i, c)
 
-            def add(i, c):
-                set(i, get(i) | c)
-
-            g = 2.5
+            def add(i, c): set(i, get(i) | c)
 
             for i in range(n):
                 set(i, 0)
@@ -261,15 +308,12 @@ class NeoPixels(object):
         self.animate(f, **kwargs)
 
 
-if __name__ == '__main__':
-    main()
-
-
 def main():
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+    from signal import pause
 
-    parser = ArgumentParser(
-        description=__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
+    parser = ArgumentParser()
+    parser.add_argument('mode', default='clock', help='animation mode')
     parser.add_argument('num', type=int, help='number of pixels')
     parser.add_argument('pin', type=int, help='BCM# of data pin')
     args = parser.parse_args()
@@ -277,8 +321,14 @@ def main():
     print('led-test')
 
     p = NeoPixels(args.num, args.pin)
-    p.rainbow(wait=1, fade=10)
-    p.color(r=0.3, v=0)
-    p.breathe(period=3, n=3, cycles=3, wait=1)
-    p.clock(fade=600)
-    on_change(__file__, exit, forking=0)
+
+    #p.rainbow(wait=1, fade=10)
+    #p.color(r=0.3, v=0)
+    #p.breathe(period=3, n=3, cycles=3, wait=1)
+    p.clock()
+    #on_change(__file__, exit, forking=0)
+    pause()
+
+
+if __name__ == '__main__':
+    main()
