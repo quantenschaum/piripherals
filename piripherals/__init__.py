@@ -6,3 +6,4 @@ from .bus import *
 from .mpr121 import *
 from .mpd import *
 from .button import *
+from .event import *

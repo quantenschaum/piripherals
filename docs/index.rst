@@ -46,6 +46,7 @@ Modules
 
    piripherals.bus
    piripherals.button
+   piripherals.event
    piripherals.led
    piripherals.mpd
    piripherals.mpr121
