@@ -15,6 +15,7 @@ from piripherals import MPR121, Bus
 
 HARDWARE = 0
 ADDR = 0x5a
+RESET_CODE = 0 if HARDWARE else 0x63
 
 
 @pytest.fixture
@@ -22,19 +23,20 @@ def bus():
     if HARDWARE:
         from smbus import SMBus
         b = SMBus(1)
-        m = b = Mock(wraps=b)  # wrap in mock to record calls
-    else:
-        # use a mock i2c bus
+        # wrap in mock to record calls
+        m = b = Mock(wraps=b)
+    else:  # use a mock i2c bus
         m = b = Mock(spec=['read_byte_data', 'write_byte_data'])
         reg = [0] * 129  # registers of the MPR121
         reg[0x5c] = 0x10  # defauts according to datasheet
         reg[0x5d] = 0x24
 
-    def read(a, r): return reg[r]
-    m.read_byte_data.side_effect = read
+    if not HARDWARE:
+        def read(a, r): return reg[r]
+        m.read_byte_data.side_effect = read
 
-    def write(a, r, b): reg[r] = b & 0xff
-    m.write_byte_data.side_effect = write
+        def write(a, r, b): reg[r] = b & 0xff
+        m.write_byte_data.side_effect = write
 
     b = Bus(b)
     yield b
@@ -59,32 +61,31 @@ def test_mpr121_init_default(bus):
     # turn all initialization off, but reset --> MPR121 in default state
     mpr = MPR121(bus=bus, handlers=0, setup=0)
 
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63})
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE})
 
 
 def test_mpr121_configure(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     mpr.configure()
-
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63, 0x5e: 0xcc})
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24,
+                     0x80: RESET_CODE, 0x5e: 0xcc}, only_non_zero=HARDWARE)
 
 
 def test_mpr121_filter(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    mpr.configure()
     mpr.filter(cdc=33, cdt=5, ffi=2, sfi=1, esi=1)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0xa1, 0x5d: 0xa9, 0x80: 0x63, 0x5e: 0xcc})
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0xa1, 0x5d: 0xa9, 0x80: RESET_CODE})
 
 
 def test_mpr121_charge(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     for i in range(13):
         mpr.charge(i, i + 1, (i + 1) % 7)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x5f: 1,
                      0x60: 2,
                      0x61: 3,
@@ -112,8 +113,8 @@ def test_mpr121_auto_config(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     mpr.auto_config(ace=1, are=1, bva=3, retry=2, afes=1, scts=0,
                     acfie=1, arfie=1, oorie=1, usl=200, lsl=130, tl=180)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x7b: (1 << 6) | (2 << 4) | (3 << 2) | 1 << 1 | 1,
                      0x7c: (0 << 7) | (1 << 2) | (1 << 1) | 1,
                      0x7d: 200,
@@ -124,19 +125,25 @@ def test_mpr121_auto_config(bus):
 
 def test_mpr121_electrode_data(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63})
+    mpr.filter(cdc=30, cdt=1, ffi=1, sfi=1, esi=0)
+    mpr.configure(prox=1)
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x5e, 0x5d: 0x28, 0x5e: 0xdc, 0x80: RESET_CODE},
+               only_non_zero=HARDWARE)
     for i in range(13):
         dev.write_byte(0x04 + 2 * i, 3 * i)
         dev.write_byte(0x05 + 2 * i, i % 3)
     ed = mpr.electrode_data()
-    assert ed == [0, 259, 518, 9, 268, 527, 18, 277, 536, 27, 286, 545, 36]
+    if HARDWARE:
+        assert all([v > 0 for v in ed])
+    else:
+        assert ed == [0, 259, 518, 9, 268, 527, 18, 277, 536, 27, 286, 545, 36]
 
 
 def test_mpr121_get_baseline(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63})
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE})
     for i in range(13):
         dev.write_byte(0x1e + i, i)
     bl = mpr.baseline()
@@ -150,8 +157,8 @@ def test_mpr121_set_baseline(bus):
             x = ((r << 1) | p) << 3
             mpr.baseline(rft=r, mhd=x + 1, nhd=x + 2,
                          ncl=x + 3, fdl=x + 4, prox=p)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x2b: 0x01,  # MHD # rising
                      0x2c: 0x02,  # NHD
                      0x2d: 0x03,  # NCL
@@ -180,8 +187,8 @@ def test_mpr121_set_baseline(bus):
 def test_mpr121_set_threshold(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     mpr.threshold(touch=111)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x41: 111,
                      0x42: 66,
                      0x43: 111,
@@ -207,7 +214,7 @@ def test_mpr121_set_threshold(bus):
                      0x57: 111,
                      0x58: 66,
                      0x59: 111,
-                     0x5a: 66,
+                     ADDR: 66,
                      })
 
 
@@ -215,8 +222,8 @@ def test_mpr121_set_threshold2(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     for i in range(13):
         mpr.threshold(channel=i, touch=7 * (i + 1), release=6 * (i + 1))
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x41: 1 * 7,
                      0x42: 1 * 6,
                      0x43: 2 * 7,
@@ -242,19 +249,19 @@ def test_mpr121_set_threshold2(bus):
                      0x57: 12 * 7,
                      0x58: 12 * 6,
                      0x59: 13 * 7,
-                     0x5a: 13 * 6,
+                     ADDR: 13 * 6,
                      })
 
 
 def test_mpr121_debounce(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     mpr.debounce(touch=2, release=3)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x5b: (3 << 4) | 2
                      })
     mpr.debounce(touch=5)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x5b: (5 << 4) | 5
                      })
 
@@ -263,8 +270,8 @@ def test_mpr121_gpio_setup(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
     for i in range(8):
         mpr.gpio_setup(i + 4, output=i % 2, mode=i % 4)
-    dev = bus.device(0x5a)
-    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: 0x63,
+    dev = bus.device(ADDR)
+    assert_reg(dev, {0x5c: 0x10, 0x5d: 0x24, 0x80: RESET_CODE,
                      0x73: 0b11001100,
                      0x74: 0b10001000,
                      0x76: 0b10101010,
@@ -274,23 +281,25 @@ def test_mpr121_gpio_setup(bus):
 
 def test_mpr121_gpio_status(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     dev.write_byte(0x75, 0b11001011)
     assert mpr.gpio_status() == 0b11001011
 
 
 def test_mpr121_gpio_set(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     for i in range(8):
         mpr.gpio_set(i + 4, 1)
         mpr.gpio_set(i + 4, 0)
-        assert_reg(dev, {0x78: 1 << i, 0x79: 1 << i}, only_non_zero=1)
+        v = 0 if HARDWARE else (1 << i)
+        assert_reg(dev, {0x78: v, 0x79: v}, only_non_zero=1)
 
 
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_touched(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     assert mpr.touched() == 0
     mpr.update_touch_state()
     handlers = []
@@ -311,40 +320,44 @@ def test_mpr121_touched(bus):
 
 
 @pytest.mark.xfail(strict=1)
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_overcurrent(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     dev.write_byte(1, 1 << 7)
     mpr.update_touch_state()
 
 
 @pytest.mark.xfail(strict=1)
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_out_of_range(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     dev.write_byte(2, 1)
     mpr.update_touch_state()
 
 
 @pytest.mark.xfail(strict=1)
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_autoconf_failed(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     dev.write_byte(3, 1 << 6)
     mpr.update_touch_state()
 
 
 @pytest.mark.xfail(strict=1)
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_autoreconf_failed(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=0)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     dev.write_byte(3, 1 << 7)
     mpr.update_touch_state()
 
 
 def test_mpr121_setup(bus):
     mpr = MPR121(bus=bus, handlers=0, setup=1)
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     assert_reg(dev, {0x2b: 0x05, 0x2c: 0x01, 0x2d: 0x03, 0x2e: 0x14, 0x2f: 0x05,
                      0x30: 0x01, 0x31: 0x03, 0x32: 0x14, 0x36: 0x01, 0x37: 0x01, 0x38: 0x03,
                      0x39: 0x14, 0x3a: 0x01, 0x3b: 0x01, 0x3c: 0x03, 0x3d: 0x14, 0x41: 0x32,
@@ -352,14 +365,16 @@ def test_mpr121_setup(bus):
                      0x48: 0x1e, 0x49: 0x32, 0x4a: 0x1e, 0x4b: 0x32, 0x4c: 0x1e, 0x4d: 0x32,
                      0x4e: 0x1e, 0x4f: 0x32, 0x50: 0x1e, 0x51: 0x32, 0x52: 0x1e, 0x53: 0x32,
                      0x54: 0x1e, 0x55: 0x32, 0x56: 0x1e, 0x57: 0x32, 0x58: 0x1e, 0x59: 0x0c,
-                     0x5a: 0x07, 0x5b: 0x22, 0x5c: 0x5e, 0x5d: 0x28, 0x5e: 0xcc, 0x7b: 0x6f,
-                     0x7c: 0x07, 0x7d: 0xc8, 0x7e: 0x82, 0x7f: 0xb4, 0x80: 0x63})
+                     ADDR: 0x07, 0x5b: 0x22, 0x5c: 0x5e, 0x5d: 0x28, 0x5e: 0xcc, 0x7b: 0x6f,
+                     0x7c: 0x07, 0x7d: 0xc8, 0x7e: 0x82, 0x7f: 0xb4, 0x80: RESET_CODE},
+               only_non_zero=HARDWARE)
 
 
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 def test_mpr121_polling(bus):
     mpr = MPR121(bus=bus, handlers=1, irq=0, setup=1)
     handlers = []
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     for i in range(13):
         handlers.append(Mock())
         mpr.on_touch(i, handlers[i])
@@ -373,6 +388,7 @@ def test_mpr121_polling(bus):
         handlers[i].assert_called_with(False, i)
 
 
+@pytest.mark.skipif(HARDWARE, reason='not possible on actual hardware')
 @patch('piripherals.util.GPIO', create=1)
 def test_mpr121_irq(GPIO, bus):
     mpr = MPR121(bus=bus, handlers=1, irq=4, setup=1)
@@ -383,7 +399,7 @@ def test_mpr121_irq(GPIO, bus):
     irq = GPIO.add_event_detect.call_args[0][2]
 
     handlers = []
-    dev = bus.device(0x5a)
+    dev = bus.device(ADDR)
     for i in range(13):
         handlers.append(Mock())
         mpr.on_touch(i, handlers[i])
