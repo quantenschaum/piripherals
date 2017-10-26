@@ -4,22 +4,30 @@ from time import sleep
 from piripherals import NeoPixels
 from piripherals.util import noop
 
+T = 1
+
 
 @pytest.fixture
 def np():
-    try:
+    with patch('piripherals.led.PixelStrip', create=1) as strip:
+        s = strip()
+        s.numPixels.side_effect = lambda: strip.call_args[0][0]
+
+        def brightness():
+            try:
+                return s.setBrightness.call_args[0][0]
+            except:
+                return 128
+
+        s.getBrightness.side_effect = brightness
+        color_data = [0] * 3
+
+        def set_color(i, r, g, b):
+            color_data[i] = (r << 16) | (g << 8) | b
+
+        strip().setPixelColorRGB.side_effect = set_color
+        strip().color_data = color_data
         return NeoPixels(3, 12)
-    except:  # use patched NeoPixels, if hardware fails
-        with patch('piripherals.led.PixelStrip', create=1) as strip:
-            strip().numPixels.side_effect = lambda: strip.call_args[0][0]
-
-            color_data = [0] * 3
-
-            def set_color(i, r, g, b):
-                color_data[i] = (r << 16) | (g << 8) | b
-            strip().setPixelColorRGB.side_effect = set_color
-            strip().color_data = color_data
-            return NeoPixels(3, 12)
 
 
 def test_neopixels_color_and_brightness(np):
@@ -83,15 +91,15 @@ def test_neopixels_deadlock(np):
 def test_animation_error(np):
     strip = np._strip
     f = Mock(side_effect=Exception, unsafe=1)
-    np.animate(f, timeout=1, wait=1, atexit=noop)
+    np.animate(f, period=T, timeout=T, wait=1, atexit=noop)
     f.assert_called_once()
     assert strip.show.call_count == 1
 
     # see if animation thread survived the exception
     f = Mock(unsafe=1)
-    np.animate(f, timeout=1, wait=1)
+    np.animate(f, period=T, timeout=T, wait=1)
     f.assert_called()
-    assert strip.show.call_count > 90
+    assert strip.show.call_count > 5
 
 
 def assert_colors(act, exp, tol=0):
@@ -113,7 +121,7 @@ def assert_brightness(act, exp, tol=0):
 
 def test_neopixels_raibow(np):
     strip = np._strip
-    np.rainbow(timeout=1, delay=1 / 6, wait=1)
+    np.rainbow(period=T, timeout=T, delay=T / 6, wait=1)
     assert strip.color_data == [0] * 3
     assert strip.setPixelColorRGB.call_count == 7 * 3
     assert strip.show.call_count == 8
@@ -131,7 +139,7 @@ def test_neopixels_raibow(np):
 
 def test_neopixels_raibow_fade(np):
     strip = np._strip
-    np.rainbow(fade=1, delay=1 / 6, wait=1)
+    np.rainbow(period=T, fade=T, delay=T / 6, wait=1)
     assert strip.color_data == [0] * 3
     assert strip.setPixelColorRGB.call_count == 7 * 3
     assert strip.show.call_count == 8
@@ -150,29 +158,27 @@ def test_neopixels_raibow_fade(np):
 
 def test_breathe(np):
     strip = np._strip
-    np.breathe(color=[1], fade=3, wait=1, delay=1 / 6)
+    np.breathe(color=[1], fade=3 * T, period=T, wait=1, delay=T / 6)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 255, 255, 255), (1, 255, 255, 255), (2, 255, 255, 255),
                    (0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
     assert_brightness(strip.setBrightness.call_args_list, [
-                      0, 0, 24, 124, 212, 106, 18, 0, 16, 78, 127, 59, 9,
+                      0, 0, 12, 62, 106, 53, 8, 0, 8, 39, 63, 29, 9,
                       0, 7, 31, 41, 14, 1, 255], tol=10)
 
 
 def test_blink(np):
     strip = np._strip
-    np.blink('1 0.3 1 0', cycles=2, wait=1, delay=1 / 4)
-    print(strip.mock_calls)
+    np.blink('1 0.3 1 0', cycles=2, period=T, wait=1, delay=T / 4)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 0, 0, 0), (1, 0, 0, 0), (2, 0, 0, 0)])
     assert_brightness(strip.setBrightness.call_args_list, [
-                      255, 76, 255, 0, 255, 76, 255, 0, 255])
+        0, 255, 76, 255, 0, 255, 76, 255, 0, 255])
 
 
 def test_sequence(np):
     strip = np._strip
-    np.sequence(cycles=1, wait=1, delay=1 / 6)
-    print(strip.mock_calls)
+    np.sequence(period=T, cycles=1, wait=1, delay=T / 6)
     assert_colors(strip.setPixelColorRGB.call_args_list,
                   [(0, 255, 0, 0), (0, 127, 127, 0), (0, 0, 255, 0),
                    (0, 0, 127, 127), (0, 0, 0, 255), (0, 127, 0, 127),

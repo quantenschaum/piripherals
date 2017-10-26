@@ -4,6 +4,8 @@ from time import sleep, monotonic
 from threading import Thread, Condition, RLock
 from math import exp, cos, pi, floor, ceil
 from datetime import datetime
+import traceback
+import atexit
 from .util import *
 try:
     from rpi_ws281x import PixelStrip
@@ -47,13 +49,12 @@ class NeoPixels(object):
     _strip = None
 
     def __init__(self, *args, **kwargs):
-        if 'brightness' not in kwargs:
-            kwargs['brightness'] = 255
         self._strip = PixelStrip(*args, **kwargs)
         self.auto_show = True
         self._strip.begin()
         self._strip.show()
         self._start_loop()
+        atexit.register(self.color)  # turn LEDs off at exit
 
     def __getattr__(self, name):
         a = getattr(self._strip, name)
@@ -81,6 +82,7 @@ class NeoPixels(object):
                     self._animation_loop()
                 except:
                     self._running = False
+                    traceback.print_exc()
                 if self._atexit:
                     self._atexit()
 
@@ -93,6 +95,7 @@ class NeoPixels(object):
         t0 = monotonic()
         try:
             self._running = True
+            b = self._strip.getBrightness()
             while self._running:
                 t = monotonic() - t0  # time since animation start
                 if self._timeout and t > self._timeout:
@@ -100,9 +103,9 @@ class NeoPixels(object):
                 s = (t * self._freq) % 1  # normalized period time
                 self._func(self._strip, s, t)
                 if self._fade:
-                    self._strip.setBrightness(int(255 * (1 - t / self._fade)))
+                    self._strip.setBrightness(int(b * (1 - t / self._fade)))
                 self._strip.show()
-                sleep(self._delay)
+                sleep(max(0, self._delay - (monotonic() - t0 - t)))
         finally:
             self._running = False
 
@@ -231,7 +234,9 @@ class NeoPixels(object):
 
         def g(t, s): return b * (exp(-n * cos(2 * pi * s)) - a) * h(t)
 
-        def f(p, s, t): return p.setBrightness(int(255 * g(t, s)))
+        b0 = self._strip.getBrightness()
+
+        def f(p, s, t):  p.setBrightness(int(b0 * g(t, s)))
 
         self.brightness(0)
 
@@ -240,7 +245,21 @@ class NeoPixels(object):
 
         self.animate(f, **kwargs)
 
-    def blink(self, pattern='10', **kwargs):
+    def blink(self, pattern='10', fade=0, color=None, **kwargs):
+        """blink LEDs on strip with given blink pattern.
+
+        Args:
+            pattern (str): the blink pattern, that is played back in each
+            animation period. It is either a str of ``1`` and ``0`` without space,
+            or a str with space separated float brightness values.
+        for other args see :meth:`animate`
+        """
+        if fade:
+            def h(t): return 1 - t / fade
+            kwargs['timeout'] = fade
+        else:
+            def h(t): return 1
+
         if ' ' in pattern:
             pattern = pattern.split()
         pattern = [max(0, min(1, float(s))) for s in pattern]
@@ -248,20 +267,44 @@ class NeoPixels(object):
 
         def g(s): return pattern[int(s * l)]
 
-        def f(p, s, t): return p.setBrightness(int(255 * g(s)))
+        b = self._strip.getBrightness()
+
+        def f(p, s, t):  p.setBrightness(int(b * g(s) * h(t)))
+
+        self.brightness(0)
+
+        if color:
+            self.color(None, *color)
+
         self.animate(f, **kwargs)
 
     def sequence(self,
                  colors=[(1, 0, 0), (0.5, 0.5, 0), (0, 1, 0), (0, 0.5, 0.5),
                          (0, 0, 1), (0.5, 0, 0.5)],
                  **kwargs):
+        """animate first LED with given sequence of colors.
+
+        Args:
+            colors ([(r,g,b),...]): sequence of colors
+        for other args see :meth:`animate`
+        """
         colors = [tuple(map(lambda x: int(255 * float(x)), c)) for c in colors]
         l = len(colors)
 
         def f(p, s, t): return p.setPixelColorRGB(0, *colors[int(s * l)])
         self.animate(f, **kwargs)
 
-    def clock(self, flash=0, secs=1, fade=0, **kwargs):
+    def clock(self, flash=1, secs=1, **kwargs):
+        """a clock.
+
+        Works best on a circular strip with 12 LEDs.
+        Hours are red, minutes are green, seconds are blue.
+
+        Args:
+            flash (bool): white second flash on 12th position
+            secs (bool): show blue seconds
+        for other args see :meth:`animate`
+        """
 
         def color(r, g, b): return (r << 16) | (g << 8) | b
 
@@ -280,7 +323,7 @@ class NeoPixels(object):
 
             def get(i): return p.getPixelColor(i)
 
-            def set(i, c): return selprip.setPixelColor(i, c)
+            def set(i, c): return p.setPixelColor(i, c)
 
             def add(i, c): set(i, get(i) | c)
 
@@ -303,7 +346,7 @@ class NeoPixels(object):
                     add(i, color(v, v, v))
 
             if flash and us < 0.1e6:
-                add(0, color(255, 255, 255))
+                add(0, color(80, 80, 80))
 
         self.animate(f, **kwargs)
 
@@ -313,21 +356,41 @@ def main():
     from signal import pause
 
     parser = ArgumentParser()
-    parser.add_argument('mode', default='clock', help='animation mode')
     parser.add_argument('num', type=int, help='number of pixels')
     parser.add_argument('pin', type=int, help='BCM# of data pin')
+    parser.add_argument('mode', help='animation mode',
+                        choices=['clock', 'breathe', 'rainbow', 'blink', 'sequence'])
+    parser.add_argument('-b', '--brightness', type=float,
+                        default=0.5, help='brightness [0,1]')
+    parser.add_argument('-f', '--fade', type=float,
+                        default=0, help='fade out time in seconds')
+    parser.add_argument('-p', '--period', type=float,
+                        default=1, help='animation period in seconds')
     args = parser.parse_args()
-
-    print('led-test')
 
     p = NeoPixels(args.num, args.pin)
 
-    #p.rainbow(wait=1, fade=10)
-    #p.color(r=0.3, v=0)
-    #p.breathe(period=3, n=3, cycles=3, wait=1)
-    p.clock()
-    #on_change(__file__, exit, forking=0)
-    pause()
+    p.brightness(args.brightness)
+
+    m = args.mode
+    kwargs = {'fade': args.fade, 'period': args.period}
+    if m == 'clock':
+        p.clock(**kwargs)
+    elif m == 'rainbow':
+        p.rainbow(**kwargs)
+    elif m == 'breathe':
+        p.breathe(color=(1, 1, 1), **kwargs)
+    elif m == 'blink':
+        p.blink(color=(1, 0, 0), **kwargs)
+    elif m == 'sequence':
+        p.sequence(**kwargs)
+    else:
+        raise Exception('undefined mode ' + m)
+
+    if args.fade:
+        sleep(args.fade + 1)
+    else:
+        pause()
 
 
 if __name__ == '__main__':
