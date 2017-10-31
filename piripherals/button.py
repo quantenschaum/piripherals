@@ -3,8 +3,7 @@
 Use GPIO pins as button inputs with debouncing and multi-click and hold-detection.
 """
 
-from .util import not_raising, fork, set_bcm
-import atexit
+from .util import not_raising, fork, cleanup_at_exit
 from threading import Thread, Event
 from functools import partial
 from time import sleep, monotonic
@@ -263,7 +262,8 @@ class ClickButton:
             count (int): # of polls after button was released, this allows
                 the polling to be paused if the button is untouched
         """
-        set_bcm()
+        GPIO.setmode(GPIO.BCM)
+        cleanup_at_exit(GPIO)
         pullup = [GPIO.PUD_DOWN, GPIO.PUD_OFF, GPIO.PUD_UP][pullup + 1]
         pressed = GPIO.LOW if low_active else GPIO.HIGH
         edge = GPIO.FALLING if low_active else GPIO.RISING

@@ -60,15 +60,11 @@ def on_change(file, callback, delay=1, forking=1):
 _cleanup = 0
 
 
-def cleanup_at_exit():
+def cleanup_at_exit(gpio):
+    global _cleanup
     if not _cleanup:
-        atexit.register(GPIO.cleanup)
+        atexit.register(gpio.cleanup)
         _cleanup = 1
-
-
-def set_bcm():
-    GPIO.setmode(GPIO.BCM)
-    cleanup_at_exit()
 
 
 class IRQHandler:
@@ -97,7 +93,8 @@ class IRQHandler:
 
     def __init__(self, pin, callback, edge=0, pullup=1):
         if pin:
-            set_bcm()
+            GPIO.setmode(GPIO.BCM)
+            cleanup_at_exit(GPIO)
             pud = [GPIO.PUD_DOWN, GPIO.PUD_OFF, GPIO.PUD_UP][pullup + 1]
             reset = GPIO.LOW if edge else GPIO.HIGH
             edge = GPIO.RISING if edge else GPIO.FALLING
