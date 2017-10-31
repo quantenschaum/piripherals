@@ -3,7 +3,7 @@ from queue import Queue
 from functools import partial
 from piripherals.util import fork, not_raising
 
-__all__ = ['Event', 'EventLoop']
+__all__ = ['Event']
 
 
 class EventLoop:

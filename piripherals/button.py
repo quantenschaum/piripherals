@@ -145,8 +145,8 @@ class ClickButton:
             *args: args passed to handler
             **kwargs: kwargs passed to handler
         """
-        callback = not_raising(callback)
-        self.click_handlers[n] = partial(callback, *args, **kwargs)
+        self.click_handlers[n] = partial(
+            not_raising(callback), *args, **kwargs)
         return callback
 
     def on_hold(self, n, callback, *args, **kwargs):
@@ -158,8 +158,7 @@ class ClickButton:
             *args: args passed to handler
             **kwargs: kwargs passed to handler
         """
-        callback = not_raising(callback)
-        self.hold_handlers[n] = partial(callback, *args, **kwargs)
+        self.hold_handlers[n] = partial(not_raising(callback), *args, **kwargs)
         return callback
 
     def update(self, pressed, now=None):
