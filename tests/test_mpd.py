@@ -234,3 +234,212 @@ def test_load_playlist(mpd):
     _send(OK)
     mpd.del_playlist(pl)
     _receive('rm "' + pl + '"\n')
+
+
+def test_playlist(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    for u in urls:
+        _send(OK)
+        mpd.add(u)
+        _receive('add "' + u + '"\n')
+
+    _send('playlistlength: 3\n', OK)
+    assert len(pl) == 3
+    _receive('status\n')
+
+    _send('playlistlength: 3\n', OK)
+    pl_iter = iter(pl)
+    _receive('status\n')
+
+    # with title
+    _send('file: ' + urls[0] + '\n', 'Pos: 0\n', 'Title: foo\n', OK)
+    song = next(pl_iter)
+    _receive('playlistinfo "0"\n')
+    assert song['file'] == urls[0]
+    assert song['pos'] == '0'
+    assert 'title' in song
+
+    # without title
+    _send('file: ' + urls[1] + '\n', 'Pos: 1\n',  OK, 'state: stop\n', OK, OK,
+          'file: ' + urls[1] + '\n', 'Pos: 1\n', 'Title: bar\n', OK, OK)
+    song = next(pl_iter)
+    _receive('stop\n')
+    assert song['file'] == urls[1]
+    assert song['pos'] == '1'
+    assert 'title' in song
+
+    # title on second try
+    _send('file: ' + urls[2] + '\n', 'Pos: 2\n',  OK, 'state: play\n', 'song: 1\n', OK, OK,
+          'file: ' + urls[2] + '\n', 'Pos: 2\n',  OK,
+          'file: ' + urls[2] + '\n', 'Pos: 2\n', 'Title: lorem ipsum\n', OK, OK)
+    song = next(pl_iter)
+    _receive('play "1"\n')
+    assert song['file'] == urls[2]
+    assert song['pos'] == '2'
+    assert 'title' in song
+
+    _send('state: stop\n', OK)
+    assert mpd.state() == 'stop'
+    _receive('status\n')
+
+
+def test_playlist_find_next_single_album(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+
+    _send('state: stop\n', OK,
+          'playlistlength: 3\n', OK,
+          'Pos: 0\n', 'Album: foo\n', OK,
+          'Pos: 1\n', 'Album: foo\n', OK,
+          'Pos: 2\n', 'Album: foo\n', OK,
+          )
+    next = pl.find_next('album')
+    assert next is None
+
+
+def test_playlist_find_next_two_albums(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+
+    _send('state: play\n', 'song: 1\n', OK,
+          'playlistlength: 3\n', OK,
+          'Pos: 1\n', 'Album: foo\n', OK,
+          'Pos: 2\n', 'Album: bar\n', OK,
+          )
+    next = pl.find_next('album')
+    assert next == 2
+
+
+def test_playlist_find_prev_single_album(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+
+    _send('state: stop\n', OK,
+          'playlistlength: 3\n', OK,
+          'Pos: 0\n', 'Album: foo\n', OK,
+          'Pos: 1\n', 'Album: foo\n', OK,
+          'Pos: 2\n', 'Album: foo\n', OK,
+          )
+    prev = pl.find_prev('album')
+    assert prev is None
+
+
+def test_playlist_find_prev_two_albums(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+
+    _send('state: play\n', 'song: 2\n', OK,
+          'playlistlength: 3\n', OK,
+          'Pos: 2\n', 'Album: bar\n', OK,
+          'Pos: 1\n', 'Album: foo\n', OK,
+          'Pos: 0\n', 'Album: foo\n', OK,
+          )
+    prev = pl.find_prev('album')
+    assert prev == 0
+
+
+def test_playlist_find_prev_three_albums(mpd):
+    _send(OK)
+    mpd.clear()
+    _receive('clear\n')
+
+    pl = mpd.current_playlist()
+
+    _send('playlistlength: 0\n', OK)
+    assert len(pl) == 0
+    _receive('status\n')
+
+    urls = ['http://89.16.185.174:8003/stream',
+            'http://89.16.185.174:8000/stream',
+            'http://89.16.185.174:8004/stream']
+
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+    _send(OK, OK, OK)
+    for u in urls:
+        mpd.add(u)
+
+    _send('state: play\n', 'song: 4\n', OK,
+          'playlistlength: 3\n', OK,
+          'Pos: 4\n', 'Album: bar\n', OK,
+          'Pos: 3\n', 'Album: bar\n', OK,
+          'Pos: 2\n', 'Album: foo\n', OK,
+          'Pos: 1\n', 'Album: foo\n', OK,
+          'Pos: 0\n', 'Album: lorem\n', OK,
+          )
+    prev = pl.find_prev('album')
+    assert prev == 1

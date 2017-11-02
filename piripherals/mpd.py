@@ -1,3 +1,4 @@
+from time import sleep
 try:
     from mpd import MPDClient
     from mpd import ConnectionError as MPDConnectionError
@@ -175,3 +176,65 @@ class MPD(object):
         if self.has_playlist(name):
             self.clear()
             self.load(name)
+
+    def current_playlist(self):
+        return MPDPlaylist(self)
+
+
+class MPDPlaylist:
+    def __init__(self, mpd, field='title'):
+        self.mpd = mpd
+        self.field = field
+
+    def __len__(self):
+        n = int(self.mpd.status()['playlistlength'])
+        #assert n == len(self.mpd.playlist())
+        return n
+
+    def get(self, i, field=None):
+        info = self.mpd.playlistinfo(i)[0]
+        assert int(info['pos']) == i
+        info0 = info
+        if field not in info:
+            status = self.mpd.status()
+            k = int(status['song']) if status['state'] != 'stop' else None
+            self.mpd.play(i)
+            for _ in range(30):
+                sleep(0.1)
+                info = self.mpd.playlistinfo(i)[0]
+                if info != info0:
+                    break
+            self.mpd.play(k) if k is not None else self.mpd.stop()
+        return info
+
+    def __getitem__(self, i):
+        return self.get(i, self.field)
+
+    def __iter__(self):
+        return (self[i] for i in range(len(self)))
+
+    def find_next(self, field):
+        status = self.mpd.status()
+        i = int(status['song']) if 'song' in status else 0
+        n = len(self)
+        if n:
+            v0 = self.get(i, field).get(field)
+            for i in range(i + 1, n):
+                v = self.get(i, field).get(field)
+                if v != v0:
+                    return i
+
+    def find_prev(self, field):
+        status = self.mpd.status()
+        i = int(status['song']) if 'song' in status else 0
+        if len(self):
+            v0 = self.get(i, field).get(field)
+            v1 = None
+            for i in range(i - 1, -1, -1):
+                v = self.get(i, field).get(field)
+                if v1 is None and v != v0:
+                    v1 = v
+                if v1 and v != v1:
+                    return i + 1
+            if v1:
+                return i
