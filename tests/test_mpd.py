@@ -75,7 +75,8 @@ OK = 'OK\n'
 
 
 def test_mpd_connect(mpd):
-    assert mpd._mpd.timeout < 10
+    assert mpd.timeout < 10
+    assert mpd.idletimeout is None
     _send(OK)
     mpd.status()
     mpd._mpd.disconnect()
@@ -321,7 +322,7 @@ def test_playlist_find_next_single_album(mpd):
           'Pos: 1\n', 'Album: foo\n', OK,
           'Pos: 2\n', 'Album: foo\n', OK,
           )
-    next = pl.find_next('album')
+    next = mpd.find_next('album')
     assert next is None
 
 
@@ -349,7 +350,7 @@ def test_playlist_find_next_two_albums(mpd):
           'Pos: 1\n', 'Album: foo\n', OK,
           'Pos: 2\n', 'Album: bar\n', OK,
           )
-    next = pl.find_next('album')
+    next = mpd.find_next('album')
     assert next == 2
 
 
@@ -378,7 +379,7 @@ def test_playlist_find_prev_single_album(mpd):
           'Pos: 1\n', 'Album: foo\n', OK,
           'Pos: 2\n', 'Album: foo\n', OK,
           )
-    prev = pl.find_prev('album')
+    prev = mpd.find_prev('album')
     assert prev is None
 
 
@@ -407,7 +408,7 @@ def test_playlist_find_prev_two_albums(mpd):
           'Pos: 1\n', 'Album: foo\n', OK,
           'Pos: 0\n', 'Album: foo\n', OK,
           )
-    prev = pl.find_prev('album')
+    prev = mpd.find_prev('album')
     assert prev == 0
 
 
@@ -441,5 +442,5 @@ def test_playlist_find_prev_three_albums(mpd):
           'Pos: 1\n', 'Album: foo\n', OK,
           'Pos: 0\n', 'Album: lorem\n', OK,
           )
-    prev = pl.find_prev('album')
+    prev = mpd.find_prev('album')
     assert prev == 1

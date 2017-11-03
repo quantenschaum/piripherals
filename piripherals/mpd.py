@@ -6,7 +6,7 @@ try:
 except:
     pass
 
-__all__ = ['MPD']
+__all__ = ['MPD', 'MPDPlaylist']
 
 
 class MPD(object):
@@ -180,22 +180,55 @@ class MPD(object):
     def current_playlist(self):
         return MPDPlaylist(self)
 
+    def find_next(self, *a):
+        return self.current_playlist().find_next(*a)
+
+    def find_prev(self, *a):
+        return self.current_playlist().find_prev(*a)
+
 
 class MPDPlaylist:
+    """the current playlist
+
+    Args:
+        mpd (MPD): MPD instance to get the playlist from
+        field (str): metadata field to look for when getting metadata for an
+            playlist entry. If this field is not present, play the track to
+            retrieve the metadata, then switch back to previous state
+    """
+
     def __init__(self, mpd, field='title'):
         self.mpd = mpd
         self.field = field
 
     def __len__(self):
+        """# of songs in the playlist
+
+        Return:
+            int: length of playlist
+        """
         n = int(self.mpd.status()['playlistlength'])
         #assert n == len(self.mpd.playlist())
         return n
 
+    def __getitem__(self, i):
+        return self.get(i, self.field)
+
+    def __iter__(self):
+        return (self[i] for i in range(len(self)))
+
     def get(self, i, field=None):
+        """get metadata of playlist entry
+
+        Args:
+            i (int): # of playlist entry
+            field (str): metadata field to look for, if omitted,
+                self.field is used
+        """
         info = self.mpd.playlistinfo(i)[0]
         assert int(info['pos']) == i
         info0 = info
-        if field not in info:
+        if (field or self.field) not in info:
             status = self.mpd.status()
             k = int(status['song']) if status['state'] != 'stop' else None
             self.mpd.play(i)
@@ -207,13 +240,19 @@ class MPDPlaylist:
             self.mpd.play(k) if k is not None else self.mpd.stop()
         return info
 
-    def __getitem__(self, i):
-        return self.get(i, self.field)
+    def find_next(self, field='album'):
+        """find next song with different field
 
-    def __iter__(self):
-        return (self[i] for i in range(len(self)))
+        Find the next song, where ``field`` has a different value than the
+        currently playing song. With ``field='album'``, this gets the beginning
+        of the next album.
 
-    def find_next(self, field):
+        If there is only a single album in the playlist or the currently
+        playing song is of the last album, ``None`` is returned.
+
+        Return:
+            int: # of playlist entry or None
+        """
         status = self.mpd.status()
         i = int(status['song']) if 'song' in status else 0
         n = len(self)
@@ -224,7 +263,19 @@ class MPDPlaylist:
                 if v != v0:
                     return i
 
-    def find_prev(self, field):
+    def find_prev(self, field='album'):
+        """find previous song with different field
+
+        Find the previous song, where ``field`` has a different value than the
+        currently playing song. With ``field='album'``, this gets the beginning
+        of the previous album.
+
+        If there is only a single album in the playlist or the currently
+        playing song is of the first album, ``None`` is returned.
+
+        Return:
+            int: # of playlist entry or None
+        """
         status = self.mpd.status()
         i = int(status['song']) if 'song' in status else 0
         if len(self):
