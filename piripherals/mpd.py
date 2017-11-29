@@ -43,13 +43,13 @@ class MPD(object):
         def with_reconnect(*args, **kwargs):
             try:
                 return a(*args, **kwargs)
-            except (MPDConnectionError, ConnectionError) as e:
-                cargs = self._connect_args
-                if not cargs:
-                    raise
-                cargs, ckwargs = cargs
-                self.connect(*cargs, **ckwargs)
-                return a(*args, **kwargs)
+        except (MPDConnectionError, ConnectionError, OSError) as e:
+            cargs = self._connect_args
+            if not cargs:
+                raise
+            cargs, ckwargs = cargs
+            self.connect(*cargs, **ckwargs)
+            return a(*args, **kwargs)
 
         return with_reconnect
 
