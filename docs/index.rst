@@ -3,9 +3,9 @@ piripherals' documentation
 
 Version |release|
 
-.. note::
-
-  This is a **Python 3 only** library!  I will make this Python 2 compatible later, maybe.
+This library is intended to be used on the RaspberryPi primarily, but it also works on other
+platforms. The things, that are related to the hardware of the Pi, will not work on other
+devices, of course.
 
 .. attention::
 
@@ -13,9 +13,7 @@ Version |release|
 
 .. note::
 
-  This library is intended to be used on the RaspberryPi primarily, but it also works on other
-  platforms. The things, that are related to the hardware of the Pi, will not work on other
-  machines, of course.
+  This is a **Python 3 only** library! - https://pythonclock.org/
 
 Installation
 ------------
@@ -28,7 +26,7 @@ Dependencies
 ------------
 
 This package has some `soft` dependencies. If you need them, depends on which
-classes you actually use.
+partes of this library you actually want to use.
 
 - ``rpi_ws281x`` https://pypi.python.org/pypi/rpi_ws281x
 - ``RPi.GPIO`` https://pypi.python.org/pypi/RPi.GPIO
