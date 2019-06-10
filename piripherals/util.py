@@ -146,3 +146,34 @@ class Poller:
                 sleep(delay)
 
         fork(loop)
+
+
+class Polling:
+    """universal halting Polling loop
+
+    The loop halts if the state did not change for the given number of polls
+    """
+
+    def __init__(self, getter, setter, delay=0.01, count=100):
+        event = Event()
+
+        def poll():
+            k = -1
+            state=None
+            while True:
+                if count and k < 0:
+                    event.clear()
+                    event.wait()
+                    k = count
+                s=getter()
+                setter(s)
+                if state!=s:
+                    k = count
+                else:
+                    k -= 1
+                state=s
+                sleep(delay)
+
+        fork(poll)
+
+        return event.set
