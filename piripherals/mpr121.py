@@ -153,7 +153,7 @@ class MPR121:
         self.addr = addr
         self.overcurrent = False
         if not hasattr(bus, 'device'):
-            self._bus = Bus(bus)
+            bus = Bus(bus)
         self._bus = bus.device(addr)
         self._handlers = [noop] * NCH
         self._touched = 0
